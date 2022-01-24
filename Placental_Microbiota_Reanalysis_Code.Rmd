@@ -1,0 +1,2941 @@
+---
+title: "R Markdown: IS THERE A PLACENTAL MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL MICROBIOTA DATASETS"
+author: "Jonathan Panzer"
+date: "January 24th, 2021"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Contents
+
+***
+
+1. [Preparation](#Preparation)
+    * [Installing and loading packages](#Installing)
+      * [Loading packages](#Loading)
+      * [Samples included in the critical review and reanalysis](#Included)
+2. [16S rRNA hypervariable region V4 subset analysis](#V4Subset)
+    * [Dinsdale et al. setup](#DinsdaleSetup)
+    * [Olomu et al. setup](#OlomuSetup)
+    * [Seferovic et al. setup](#SeferovicSetup)
+    * [Theis et al. setup](#TheisSetup)
+    * [Winters et al. setup](#WintersSetup)
+    * [Younge et al. setup](#YoungeSetup)
+    * [V4 Subset merging](#V4merger)
+    * [V4 Normalization](#V4normalization)
+    * [V4 Subsetting](#V4subsetting)
+    * [V4 PCoA plots (Figure 5)](#V4PCoAs)
+    * [V4 Heatmaps by Study (Figure 6)](#V4Heatmaps)
+3. [Study-by-study analysis](#sbsAnalysis)
+    * [DADA2 pipeline details](#DADA2pipeline)
+    * [Study specific changes](#StudyChanges)
+    * [de Goffau et al. analysis](#deGoffauAnalysis)
+      * [de Goffau et al. data cleaning](#deGoffauCleaning)
+      * [de Goffau et al. Normalization](#deGoffauNormalization)
+      * [de Goffau et al. PTCWA PCoA](#deGoffauPCoA)
+    * [Dinsdale et al. analysis](#DinsdaleAnalysis)
+      * [Dinsdale et al. data cleaning](#DinsdaleCleaning)
+      * [Dinsdale et al. subsets pre-DECONTAM](#DinsdalePreDSubsets)
+      * [Dinsdale et al. DECONTAM](#DinsdaleDECONTAM)
+      * [Dinsdale et al. normalization](#DinsdaleNormalization)
+      * [Dinsdale et al. post-normalization subsets](#DinsdalePostNSubsets)
+      * [Dinsdale et al. PCoAs](#DinsdalePCoAs)
+    * [Gomez-Arango et al. analysis](#GomezArangoAnalysis)
+      * [Gomez-Arango et al. data cleaning](#GomezArangoCleaning)
+      * [Gomez-Arango et al. normalization](#GomezArangoNormalization)
+      * [Gomez-Arango et al. subsetting](#GomezArangoSubsetting)
+    * [Lauder et al. analysis](#LauderAnalysis)
+      * [Lauder et al. data cleaning](#LauderCleaning)
+      * [Lauder et al. subsets pre-DECONTAM](#LauderPreDSubsets)
+      * [Lauder et al. DECONTAM](#LauderDECONTAM)
+      * [Lauder et al. normalization](#LauderNormalization)
+      * [Lauder et al. post-normalization subsets](#LauderPostNSubsets)
+      * [Lauder et al. PCoAs](#LauderPCoAs)
+    * [Leiby et al. analysis](#LeibyAnalysis)
+      * [Leiby et al. data cleaning](#LeibyCleaning)
+      * [Leiby et al. subsets pre-DECONTAM](#LeibyPreDSubsets)
+      * [Leiby et al. DECONTAM](#LeibyDECONTAM)
+      * [Leiby et al. normalization](#LeibyNormalization)
+      * [Leiby et al. post-normalization subsets](#LeibyPostNSubsets)
+      * [Leiby et al. PCoAs](#LeibyPCoAs)
+    * [Leon et al. analysis](#LeibyAnalysis)
+      * [Leon et al. data cleaning](#LeonCleaning)
+      * [Leon et al. DECONTAM](#LeonDECONTAM)
+      * [Leon et al. normalization](#LeonNormalization)
+      * [Leon et al. post-normalization subsets](#LeonPostNSubsets)
+      * [Leon et al. PCoA](#LeonPCoA)
+    * [Liu et al. analysis](#LiuAnalysis)
+      * [Liu et al. data cleaning](#LiuCleaning)
+      * [Liu et al. normalization](#LiuNormalization)
+      * [Liu et al. post-normalization subsets](#LiuPostNSubsets)
+      * [Liu et al. agglomeration](#LiuAgglomeration)
+      * [Liu et al. PCoA](#LiuPCoA)
+    * [Olomu et al. analysis](#OlomuAnalysis)
+      * [Olomu et al. subset pre-DECONTAM](#OlomuPreDSubsets)
+      * [Olomu et al. DECONTAM](#OlomuDECONTAM)
+      * [Olomu et al. normalization](#OlomuNormalization)
+      * [Olomu et al. post-normalization subsets](#OlomuPostNSubsets)
+      * [Olomu et al. PCoAs](#OlomuPCoAs)
+    * [Parnell et al. analysis](#ParnellAnalysis)
+      * [Parnell et al. data cleaning](#ParnellCleaning)
+      * [Parnell et al. subset pre-DECONTAM](#ParnellPreDSubsets)
+      * [Parnell et al. DECONTAM](#ParnellDECONTAM)
+      * [Parnell et al. normalization](#ParnellNormalization)
+      * [Parnell et al. post-normalization subsets](#ParnellPostNSubsets)
+      * [Parnell et al. PCoA](#ParnellPCoAs)
+    * [Seferovic et al. analysis](#SeferovicAnalysis)
+      * [Seferovic et al. normalization](#SeferovicNormalization)
+      * [Seferovic et al. post-normalization subset](#SeferovicPostNSubsets)
+      * [Seferovic et al. PCoA](#SeferovicPCoA)
+    * [Sterpu et al. analysis](#SterpuAnalysis)
+      * [Sterpu et al. data cleaning](#SterpuCleaning)
+      * [Sterpu et al. DECONTAM](#SterpuDECONTAM)
+      * [Sterpu et al. normalization](#SterpuNormalization)
+      * [Sterpu et al. post-normalization subsets](#SterpuPostNSubsets)
+      * [Sterpu et al. PCoA](#SterpuPCoA)
+    * [Tang et al. analysis](#TangAnalysis)
+      * [Tang et al. data cleaning](#TangCleaning)
+      * [Tang et al. normalization](#TangNormalization)
+      * [Tang et al. post-normalization subset](#TangPostNSubsets)
+    * [Theis et al. analysis](#TheisAnalysis)
+      * [Theis et al. additional data cleaning](#TheisAdtnlCleaning)
+      * [Theis et al. DECONTAM](#TheisDECONTAM)
+      * [Theis et al. normalization](#TheisNormalization)
+      * [Theis et al. post-normalization subsets](#TheisPostNSubsets)
+      * [Theis et al. PCoAs](#TheisPCoAs)
+    * [Winters et al. analysis](#WintersAnalysis)
+      * [Winters et al. data cleaning](#WintersAdtnlCleaning)
+      * [Winters et al. DECONTAM](#WintersDECONTAM)
+      * [Winters et al. normalization](#WintersNormalization)
+      * [Winters et al. post-normalization subsets](#WintersPostNSubsets)
+      * [Winters et al. PCoA](#WintersPCoA)
+    * [Younge et al. analysis](#YoungeAnalysis)
+      * [Younge et al. additional data cleaning](#YoungeAdtnlCleaning)
+      * [Younge et al. normalization](#YoungeNormalization)
+      * [Younge et al. post-normalization subset](#YoungePostNSubset)
+      * [Younge et al. PCoA](#YoungePCoA)
+4. [Tables](#Tables)
+      * [Border and text definitions](#BandTDefs)
+    * [Table 1](#Table1)
+    * [Table 2](#Table2)
+    * [Table S1](#TableS1)
+    * [Table S2](#TableS2)
+    * [Table S3](#TableS3)
+
+***
+
+# Preparation {#Preparation}
+
+First download the respository `Placental_Microbiota_Reanalysis` by clicking on `Code`>`Download Zip`. Proceed to unzip it by right-clicking to extract the files. Then place the `Placental_Microbiota_Reanalysis` directory wherever is convenient. After starting RStudio with R (Version 3.6.1) loaded, under `File` select `New Project` -> `Existing Directory` and change to project working directory to the `Placental_Microbiota_Reanalysis` directory. Creating a new project may cause this Rmarkdown file to close if the `.Rmd` version is open in the current session, but just reopen it after the new project is created. When running the code for this critical review and reanalysis, is is preferable to use the `.Rmd` version instead of copy-pasting from the `.html` version. In addition, it is preferable to run the code as chunks by clicking the green arrow button located in the top-right corner of each chunk, or knitting the entire document to HTML once all of the package installations have been taken care of.
+
+This `.Rmd` document was successfully run with RStudio (Version 1.4.1103) and R (Version 3.6.1). The version of RStudio can be checked under `Help` -> `About RStudio`. The version of R can be checked and changed under `Tools` -> `Global Options`. In the `General` side tab, there should be an R version listed near the top of the window, which can be changed, but this requires RStudio to restart before the version change takes effect. RStudio version 1.4.1717 is stable and can be downloaded [here](https://dailies.rstudio.com/version/1.4.1717-3/). R version 3.6.1 can be downloaded [here](https://cran.r-project.org/bin/windows/base/old/3.6.1/).
+
+In addition to downloading `RStudio` and `R`, `Rtools` is also necessary. It is required for the installation of the R package `devtools`, which is used here to install older versions of packages and packages residing on github. `Rtools` version 35, which is compatible with `R/3.6.1`, can be downloaded [here](https://cran.r-project.org/bin/windows/Rtools/history.html).
+
+`BLAST+` from the NCBI is required to run local BLAST searches to the 16S rRNA gene sequence database located in the `dada2tools` R package. The `BLAST+` installation instructions are  [here](https://www.ncbi.nlm.nih.gov/books/NBK569861/) and the ftp link is [here](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/). Once the appropriate and compatible version of `BLAST+` is downloaded, it must be installed. To check if `BLAST+` was successfully installed, open a terminal or command prompt and type `blastn`. If a `BLAST query/options error...` is returned, the installation was successful.
+
+**When asked to update packages, or install from source, press enter to skip updates or select option "no".**
+
+If the `install.packages("package.name", force = TRUE)` commands are not successful, try installing with the command `BiocManager::install("package.name")`.
+
+
+This first chunk details the current system environment. and installs the R packages `BiocManager`, `devtools`, and `usethis`. It also puts `Rtools` on the PATH system environment variable so that it can be accessed by `R`. 
+
+```{r Session_Info}
+sessionInfo()
+
+if (!requireNamespace("BiocManager", quietly = TRUE)){
+  install.packages("BiocManager")
+}
+
+#Final check to ensure that the file path is properly set. `getwd()` should return the file path with "/Placental_Microbiota_Reanalysis" at the end. Therefore, `grepl()` should return TRUE.
+grepl(pattern = "(.*)(Placental_Microbiota_Reanalysis)$", x = getwd())
+
+#allow R to find Rtools via environment variable
+Sys.setenv(PATH=paste("C:/Rtools/bin",Sys.getenv("PATH"),sep=";"))
+Sys.setenv(BINPREF="C:/Rtools/mingw_$(WIN)/bin/")
+#double checking that the path is correct
+Sys.which("make")
+
+#devtools required to install package `dada2tools`
+if (!requireNamespace("devtools", quietly = TRUE)){
+  BiocManager::install("devtools")
+}
+#installs version 2.0.0 of the usethis package if not currently installed
+if(!packageVersion("usethis") == "2.0.0"){
+  devtools::install_version("usethis", version = "2.0.0")
+}
+
+#installs version 2.3.1 of the devtools package if not currently installed
+if(!packageVersion("devtools") == "2.3.1"){
+  devtools::install_version("devtools", version = "2.3.1")
+}
+
+library(devtools)
+```
+
+
+### Installing packages {#Installing}
+
+This Rmarkdown file details how the data were analyzed and how the figures/tables were generated. All analysis was performed in R using the packages listed in the following chunk and their dependencies. This chunk is not evaluated when the entire document is knit, but these packages need to be installed before the document will successfully knit. Packages can be installed with several commands. The following chunk lists the code for the specific packages, which were used to successfully knit the document. If a package has never been installed before,  it may be necessary to first install the package with `BiocManager::install("package_name")`, and then use `devtools::install_version("package_name", version = "1.2.3")` for the exact version. If a package has been installed but was built under a different R 3.6 version, it may be necessary to re-install packages using `install.packages("package_name", force = TRUE)`, or to select a specific version with `devtools::install_version("package_name", version = "1.2.3")`. `install.packages("Package_Name")` is also another option. 
+
+For exact versions please **skip updates to other packages when asked**.
+
+```{r Installing_Packages, eval=FALSE}
+#The following packages need to be installed as R/3.6.1 compatible versions
+
+#installs Rcpp
+devtools::install_version("Rcpp", version = "1.0.5")
+#installs dada2
+devtools::install_url("https://bioconductor.org/packages/3.10/bioc/src/contrib/Archive/dada2/dada2_1.14.0.tar.gz")
+#installs dplyr
+devtools::install_version("dplyr", version = "1.0.3")
+#installs decontam version 1.6.0
+devtools::install_version("decontam", version = "1.6.0")
+#installs phyloseq
+devtools::install_version("phyloseq", version = "1.30.0")
+#installs stringr
+devtools::install_version("stringr", version = "1.3.1")
+#installs readxl
+devtools::install_version("readxl", version = "1.3.0")
+#installs openxlsx
+devtools::install_version("openxlsx", version = "4.2.2")
+#vegan package version 2.5.6 is compatible with R/3.6.1. vegan/2.5.6 requires permute/0.9.4. Install with:
+devtools::install_version("permute", "0.9.4"); devtools::install_version("vegan", "2.5.6")
+#installs ecodist version earlier than 2.0.7
+devtools::install_version("ecodist", version = "2.0.5")
+#installs RPushbullet version earlier than 0.3.3
+devtools::install_version("RPushbullet", version = "0.3.2")
+#installs magrittr version 2.0.1
+install.packages("magrittr")
+#installs pdftools version earlier than 2.3.1
+devtools::install_version("pdftools", version = "2.2")
+#installs ComplexHeatmap
+devtools::install_version("ComplexHeatmap", version = "2.2.0")
+#installs ggplot2 version earlier than 3.3.3
+devtools::install_version("ggplot2", version = "3.3.2")
+#installs purrr version 0.3.4
+install.packages("purrr")
+#installs knitr version earlier than 1.31
+devtools::install_version("knitr", version = "1.30")
+#installs circlize version earlier than 0.4.12
+devtools::install_version("circlize", version = "0.4.10")
+#installs seqinr version earlier than 4.2.5
+devtools::install_version("seqinr", version = "4.2.4")
+#installs pairwiseAdonis version 0.4
+devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
+#installs officer version earlier than 0.4.0
+devtools::install_version("officer", version = "0.3.19")
+#installs flextable version earlier than 0.6.9
+devtools::install_version("flextable", version = "0.6.5")
+#installs gifski version 0.8.3
+devtools::install_version("gifski", version = "0.8.3")
+#installs pdftools version 2.2
+devtools::install_version("pdftools", version = "2.2")
+```
+
+### Loading packages {#Loading}
+
+The following chunk essentially loads all the functions contained within each package so that the functions can be called without prefacing the package names each time.
+
+```{r Loading_Packages}
+
+library(dada2)
+library(decontam)
+library(dplyr)
+library(phyloseq)
+library(stringr)
+library(readxl)
+library(openxlsx)
+library(vegan)
+library(ecodist)
+library(RPushbullet)
+library(magrittr)
+library(pdftools)
+library(ComplexHeatmap)
+library(ggplot2)
+library(purrr)
+library(knitr)
+library(circlize)
+library(seqinr)
+library(pairwiseAdonis)
+library(flextable)
+library(officer)
+
+#also need to install dada2tools from github.
+if (!requireNamespace("dada2tools", quietly = TRUE)){
+  devtools::install_github("jp589/dada2tools", build_vignettes = TRUE)
+}
+library(dada2tools)
+
+#stores original palette
+pal <- palette()
+#package versions used
+sessionInfo()
+```
+
+### Samples included in the critical review and reanalysis {#Included}
+
+Some samples did not meet the quality criteria of this critical review and reanalysis and were therefore removed before DADA2 processing. Here is a list of all samples that passed the quality filtering step. 
+
+```{r High_Quality_Samples}
+
+#loads all merged sample data
+de_Goffau_merged <- read.csv("deGoffau_merged.csv", stringsAsFactors = FALSE)
+Lauder_merged <- read.csv("Lauder_merged.csv", stringsAsFactors = FALSE)
+Leiby_merged <- read.csv("Leiby_merged.csv", stringsAsFactors = FALSE)
+Olomu_merged <- read.csv("Olomu_merged.csv", stringsAsFactors = FALSE)
+Parnell_merged <- read.csv("Parnell_merged.csv", stringsAsFactors = FALSE)
+Theis_merged <- read.csv("Theis_merged.csv", stringsAsFactors = FALSE)
+Winters_merged <- read.csv("Winters_merged.csv", stringsAsFactors = FALSE)
+Sterpu_merged <- read.csv("Sterpu_merged.csv", stringsAsFactors = FALSE)
+Dinsdale_merged <- read.csv("Dinsdale_merged.csv", stringsAsFactors = FALSE)
+Tang_merged <- read.csv("Tang_merged.csv", stringsAsFactors = FALSE)
+Liu_merged <- read.csv("Liu_merged.csv", stringsAsFactors = FALSE)
+GA_merged <- read.csv("GomezArango_merged.csv", stringsAsFactors = FALSE)
+Younge_merged <- read.csv("Younge_merged.csv", stringsAsFactors = FALSE)
+Leon_merged <- read.csv("Leon_merged.csv", stringsAsFactors = FALSE)
+Seferovic_merged <- read.csv("Seferovic_merged.csv", stringsAsFactors = FALSE)
+
+#creates list of samples which passed quality filtering and were used in the reanalysis
+High_Quality_Samples <- list(
+    de_Goffau = colnames(de_Goffau_merged)[9:ncol(de_Goffau_merged)], 
+    Lauder = colnames(Lauder_merged)[9:ncol(Lauder_merged)], 
+    Leiby = colnames(Leiby_merged)[9:ncol(Leiby_merged)], 
+    Olomu = colnames(Olomu_merged)[9:ncol(Olomu_merged)], 
+    Parnell = colnames(Parnell_merged)[9:ncol(Parnell_merged)],
+    Theis = colnames(Theis_merged)[9:ncol(Theis_merged)], 
+    Winters = colnames(Winters_merged)[9:ncol(Winters_merged)], 
+    Sterpu = colnames(Sterpu_merged)[9:ncol(Sterpu_merged)], 
+    Dinsdale = colnames(Dinsdale_merged)[9:ncol(Dinsdale_merged)], 
+    Tang = colnames(Tang_merged)[9:ncol(Tang_merged)], 
+    Liu = colnames(Liu_merged)[9:ncol(Liu_merged)], 
+    Gomez_Arango = colnames(GA_merged)[9:ncol(GA_merged)], 
+    Younge = colnames(Younge_merged)[9:ncol(Younge_merged)], 
+    Leon = colnames(Leon_merged)[9:ncol(Leon_merged)],
+    Seferovic = colnames(Seferovic_merged)[9:ncol(Seferovic_merged)])
+```
+
+***
+
+# 16S rRNA hypervariable region V4 subset analysis {#V4Subset}
+
+This begins the portion of code used to generate figures 5 and 6. For each of the six studies, the DADA2 analyzed sequence data, which is stored in a `Study_Name_merged.csv` file, was cleaned (e.g., mitochondrial, chloroplast, and reads unclassified at the phylum level or above were removed from the dataset. In addition, samples with less than 100 reads after the prior read removal were removed. For the exact cleaning process, the code for the function `dadaset_clean()` can be viewed by typing the function `dadaset_clean` without parentheses and pressing enter). In addition, publicly available metadata for each study, usually a `Study_Name_SraRunTable.csv`, was stored. ASVs not classified at the genus level in tables and figures were compared to bacterial type strains in the NCBI BLAST sequence database. Sequences were reclassified to the genus level with the highest percent identity greater than 95%.
+
+### Dinsdale et al. setup {#DinsdaleSetup}
+
+This chunk processes the Dinsdale et al. dataset after DADA2 processing. into an ASV count table with corresponding taxonomy and metadata.
+
+```{r V4_Setup_Dinsdale}
+
+#Preparing Dinsdale et al. for inclusion in the V4 subset
+#Loads both sequence and metadata
+Dinsdale_merged <- read.csv(file = "Dinsdale_merged.csv", stringsAsFactors = FALSE)
+Dinsdale_meta <- read.csv(file = "Dinsdale_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#Subsets metadata columns to those pertinent to this analysis and renames them
+Dinsdale_meta_select <- Dinsdale_meta %>% select_if(colnames(.) %in% c("Run", "Sample_name", "title")); colnames(Dinsdale_meta_select) <- c("Run", "Sample", "Type")
+
+#cleans sequence data and renames rows with numbered ASVs
+Dinsdale_merged_clean <- dadaset_clean(Dinsdale_merged, read_thresh = 100);rownames(Dinsdale_merged_clean) <- paste0("ASV", 1:nrow(Dinsdale_merged_clean))
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Dinsdale_ASV <- Dinsdale_merged_clean[,9:159]
+Dinsdale_TAX <- data.frame(ASV = rownames(Dinsdale_merged_clean), Dinsdale_merged_clean[,1:8], row.names = rownames(Dinsdale_merged_clean), stringsAsFactors = FALSE)
+
+#filters metadata to samples which passed the 100 read cutoff
+Dinsdale_META <- Dinsdale_meta_select %>% filter(Dinsdale_meta_select$Run %in% colnames(Dinsdale_ASV))
+
+#recodes gestational age and delivery metadata for placental samples, and technical controls. 
+for (i in 1:length(Dinsdale_META$Type)){
+    if (Dinsdale_META$Type[i] == "Placenta"){
+        Dinsdale_META$GA[i] <- "Unknown"
+        Dinsdale_META$Delivery[i] <- "Unknown"
+    } else {
+        Dinsdale_META$GA[i] <- NA
+        Dinsdale_META$Delivery[i] <- NA
+    }
+}
+Dinsdale_META$Type <- Dinsdale_META$Type %>% recode(., "NEG" = "Technical Control", "Vagina" = "Vaginal Swab")
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names.
+Dinsdale_META$Reads <- unlist(colSums(Dinsdale_ASV));Dinsdale_META$Study <- "Dinsdale"; rownames(Dinsdale_META) <- Dinsdale_META$Sample
+
+#Reclassifying ASV10 since its sequence shares 96.44% similarity to type strains in the genus Phenylobacterium
+Dinsdale_TAX$Genus[10] <- "Phenylobacterium*"
+```
+
+### Olomu et al. setup {#OlomuSetup}
+
+The following chunk processes the Olomu et al. dataset similarly to the previous chunk.
+
+```{r V4_Setup_Olomu}
+
+#Preparing Olomu et al. for inclusion in the V4 Subset
+#Loads both sequence and metadata
+Olomu_merged <- read.csv("Olomu_merged.csv", stringsAsFactors = FALSE)
+Olomu_meta <- read.csv(file = "Olomu_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#Subsets metadata columns to those pertinent to this analysis and renames them
+Olomu_meta_select <- Olomu_meta %>% select_if(colnames(.) %in% c("Run", "isolation_source", "Library.Name"))
+Olomu_meta_select <- Olomu_meta_select %>% filter(Run %in% colnames(Olomu_merged[,9:ncol(Olomu_merged)])); colnames(Olomu_meta_select)[2:3] <- c("Type", "Sample")
+#removes extraneous sample name text found in all sample names
+Olomu_meta_select$Sample <- gsub(pattern = "(\\S*)(_GDM_Placental_microbiome)", x = Olomu_meta_select$Sample, replacement = "\\1")
+#removes cord blood and maternal blood samples from metadata
+Olomu_meta_select <- Olomu_meta_select[!str_detect(string = Olomu_meta_select$Type, pattern = "blood$"),]
+#filters ASV count table to match metadata
+Olomu_merged <- cbind(Olomu_merged[,1:8], Olomu_merged %>% select_if(colnames(.) %in% Olomu_meta_select$Run))
+#cleans sequence data and renames rows with numbered ASVs
+Olomu_merged_clean <- dadaset_clean(Olomu_merged, read_thresh = 100); rownames(Olomu_merged_clean) <- paste0("ASV", 1:nrow(Olomu_merged_clean))
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Olomu_ASV <- Olomu_merged_clean[,-c(1:8)]
+Olomu_TAX <- data.frame(ASV = rownames(Olomu_merged_clean), Olomu_merged_clean[,1:8], row.names = rownames(Olomu_merged_clean), stringsAsFactors = FALSE)
+
+#filters metadata to samples which passed the 100 read cutoff
+Olomu_META <- Olomu_meta_select %>% filter(Run %in% colnames(Olomu_ASV))
+
+#recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
+Olomu_META$Type <- case_when(
+  str_detect(string = Olomu_META$Sample, pattern = "^EC") ~ "Pos_Control",
+  TRUE ~ Olomu_META$Type
+)
+Olomu_META$Type <- Olomu_META$Type %>% recode(., "not applicable" = "Technical Control", "vagina-rectal swabs" = "VR_Swab", "placental sample" = "Placenta")
+for (i in 1:length(Olomu_META$Type)){
+    if (Olomu_META$Type[i] == "Placenta"){
+        Olomu_META$GA[i] <- "Term"
+        Olomu_META$Delivery[i] <- "Cesarean"
+    } else {
+        Olomu_META$GA[i] <- NA
+        Olomu_META$Delivery[i] <- NA
+    }
+}
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names. Finally reorders metadata to match for future combination.
+Olomu_META$Reads <- unlist(colSums(Olomu_ASV)); Olomu_META$Study <- "Olomu"; rownames(Olomu_META) <- Olomu_META$Sample; Olomu_META <- Olomu_META[,c(1,3,2,4:7)]
+
+#Reclassifying ASV484 since its sequence shares 95.65% identity to type strain Desulfuromonas soudanensis
+Olomu_TAX$Genus[484] <- "Desulfuromonas*"
+```
+
+### Seferovic et al. setup {#SefervicSetup}
+
+The following chunk processes the Seferovic et al. dataset similarly to the previous chunk.
+
+```{r V4_Setup_Seferovic}
+
+#preparing Seferovic et al. for inclusion in the V4 Subset
+#Loads both sequence and metadata
+Seferovic_merged <- read.csv("Seferovic_merged.csv", stringsAsFactors = FALSE)
+Seferovic_meta <- read.csv(file = "Seferovic_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#Subsets metadata columns to those pertinent to this analysis and renames them
+Seferovic_meta_select <- Seferovic_meta %>% select_if(colnames(.) %in% c("Run", "Library.Name"))
+colnames(Seferovic_meta_select)[2] <- "Sample"
+#removes extraneous sample name text found in all sample names
+Seferovic_meta_select$Sample <- gsub(pattern = "(Aagaard.)(.*)(_AagaardK)", x = Seferovic_meta_select$Sample, replacement = "\\2")
+
+#cleans sequence data and renames rows with numbered ASVs
+Seferovic_merged_clean <- dadaset_clean(df = Seferovic_merged, read_thresh = 100); rownames(Seferovic_merged_clean) <- paste0("ASV", 1:nrow(Seferovic_merged_clean))
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Seferovic_ASV <- Seferovic_merged_clean[,8:ncol(Seferovic_merged_clean)]
+Seferovic_TAX <- data.frame(ASV = rownames(Seferovic_merged_clean), Seferovic_merged_clean[,1:7], Species = as.character(NA), row.names = rownames(Seferovic_merged_clean), stringsAsFactors = FALSE)
+
+#filters metadata to samples which passed the 100 read cutoff
+Seferovic_META <- Seferovic_meta_select %>% filter(Run %in% colnames(Seferovic_ASV))
+
+#recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
+for (i in 1:length(Seferovic_META$Sample)){
+    if (Seferovic_META$Sample[i] == "Blank1" | Seferovic_META$Sample[i] == "Blank2"){
+        Seferovic_META$Type[i] <- "Technical Control"
+        Seferovic_META$GA[i] <- NA
+        Seferovic_META$Delivery[i] <- NA
+    } else {
+        Seferovic_META$Type[i] <- "Placenta"
+        Seferovic_META$GA[i] <- "Unknown"
+        Seferovic_META$Delivery[i] <- "Unknown"
+    }
+}
+
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names.
+Seferovic_META$Reads <- unlist(colSums(Seferovic_ASV)); Seferovic_META$Study <- "Seferovic"; rownames(Seferovic_META) <- Seferovic_META$Sample
+
+#ASV3 was not reclassified since it only shares 93.31% identity to Ruminococcus type strains
+```
+
+### Theis et al. setup {#TheisSetup}
+
+The following chunk processes the Theis et al. dataset similarly to the previous chunk.
+
+```{r V4_Setup_Theis}
+
+#preparing Theis et al. for inclusion in the V4 Subset
+#Loads both sequence and metadata
+Theis_merged <- read.csv(file = "Theis_merged.csv", stringsAsFactors = FALSE)
+Theis_meta <- read.csv(file = "Theis_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#Subsets metadata columns to those pertinent to this analysis and renames them
+Theis_meta_select <- Theis_meta %>% select_if(colnames(.) %in% c("Run", "Library.Name"))
+colnames(Theis_meta_select)[2] <- "Sample"
+
+#Subsets to regular PCR amplified samples
+Theis_meta_select <- Theis_meta_select[1:101,]
+Theis_merged <- cbind(Theis_merged[,1:8], Theis_merged %>% select_if(colnames(.) %in% Theis_meta_select$Run))
+
+#cleans sequence data and renames rows with numbered ASVs
+Theis_merged_clean <- dadaset_clean(Theis_merged, read_thresh = 100); rownames(Theis_merged_clean) <- paste0("ASV", 1:nrow(Theis_merged_clean))
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Theis_ASV <- Theis_merged_clean[,9:ncol(Theis_merged_clean)]
+Theis_TAX <- data.frame(ASV = rownames(Theis_merged_clean), Theis_merged_clean[,1:8], row.names = rownames(Theis_merged_clean), stringsAsFactors = FALSE)
+
+#filters metadata to samples which passed the 100 read cutoff
+Theis_META <- Theis_meta_select %>% filter(Run %in% colnames(Theis_ASV))
+
+#recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
+for (i in 1:length(Theis_META$Run)){
+    if (str_detect(string = Theis_META$Sample[i], pattern = "AC")|str_detect(string = Theis_META$Sample[i], pattern = "V")){
+        Theis_META$Type[i] <- "Placenta"
+        Theis_META$GA[i] <- "Term"
+        Theis_META$Delivery[i] <- "Cesarean"
+    } else {
+        Theis_META$Type[i] <- "Technical Control"
+        Theis_META$GA[i] <- NA
+        Theis_META$Delivery[i] <- NA
+    }
+}
+
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names.
+Theis_META$Reads <- unlist(colSums(Theis_ASV)); Theis_META$Study <- "Theis"; rownames(Theis_META) <- Theis_META$Sample
+```
+
+### Winters et al. setup {#WintersSetup}
+
+The following chunk processes the Winters et al. dataset similarly to the previous chunk.
+
+```{r V4_Setup_Winters}
+
+#preparing Winters et al. for inclusion in the V4 Subset
+#Loads both sequence and metadata. `Key` correlates run numbers with sample names
+Winters_merged <- read.csv("Winters_merged.csv", stringsAsFactors = FALSE)
+Winters_meta <- read.csv("Winters_meta.csv", header = TRUE, stringsAsFactors = FALSE)
+key <- read.xlsx("Winters_SRRkey_metadata.xlsx")
+
+#Adds an `S` to entries in `Winters_meta` Sample column which start with a digit
+for(i in 1:nrow(Winters_meta)){
+    if(str_detect(string = Winters_meta$Sample[i], pattern = "\\b\\d+") == TRUE){
+        Winters_meta$Sample[i] <- paste0("S", Winters_meta$Sample[i])
+    }
+}
+
+#merges key with metadata by sample names, then reorders metadata
+Winters_meta <- merge(Winters_meta, key[,1:2], by = "Sample"); Winters_meta <- Winters_meta[,c(10,1:9)]
+
+#subsets to high quality samples
+Winters_merged <- cbind(Winters_merged[,1:8], Winters_merged %>% select_if(colnames(.) %in% Winters_meta$Sample))
+
+#cleans sequence data and renames rows with numbered ASVs
+Winters_merged_clean <- dadaset_clean(Winters_merged, read_thresh = 100); rownames(Winters_merged_clean) <- paste0("ASV", 1:nrow(Winters_merged_clean))
+
+#subsets to samples left after cleaning data and reorders metadata according to column names in merged data
+Winters_META <- Winters_meta %>% filter(Sample %in% colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)])
+Winters_META <- Winters_META[match(x = colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)], table = Winters_META$Sample),]
+#Blank samples do not have gestational age or delivery data
+Winters_META[450:461,7:8] <- NA
+
+#renames columns as sample run number
+colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)] <- Winters_META$Run
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Winters_ASV <- Winters_merged_clean[,9:ncol(Winters_merged_clean)]
+Winters_TAX <- data.frame(ASV = rownames(Winters_merged_clean), Winters_merged_clean[,1:8], row.names = rownames(Winters_merged_clean), stringsAsFactors = FALSE)
+
+#recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
+Winters_META$Type <- c(rep("Placenta", (nrow(Winters_META)-12)), rep("Technical Control", 12))
+Winters_META$Delivery <- Winters_META$Delivery %>% recode(., "CS" = "Cesarean")
+
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names. Finally reorders metadata to match for future combination.
+Winters_META$Reads <- unlist(colSums(Winters_ASV)); Winters_META$Study <- "Winters"; rownames(Winters_META) <- Winters_META$Sample; Winters_META <- Winters_META[,c(1,2,11,7:8,12:13)]
+```
+
+### Younge et al. setup {#YoungeSetup}
+
+The following chunk processes the Younge et al. dataset similarly to the previous chunk.
+
+```{r V4_Setup_Younge}
+
+#preparing Younge et al. for inclusion in the V4 Subset
+#Loads both sequence and metadata
+Younge_merged <- read.csv(file = "Younge_merged.csv", stringsAsFactors = FALSE)
+Younge_meta <- read.csv(file = "Younge_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#Subsets metadata columns to those pertinent to this analysis and renames them
+Younge_meta_select <- Younge_meta %>% select_if(colnames(.) %in% c("Run", "Site", "Subject"))
+colnames(Younge_meta_select)[2] <- "Type"
+
+#cleans sequence data and renames rows with numbered ASVs
+Younge_merged_clean <- dadaset_clean(Younge_merged, read_thresh = 100); rownames(Younge_merged_clean) <- paste0("ASV", 1:nrow(Younge_merged_clean))
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Younge_ASV <- Younge_merged_clean[,9:ncol(Younge_merged_clean)]
+Younge_TAX <- data.frame(ASV = rownames(Younge_merged_clean), Younge_merged_clean[,1:8], row.names = rownames(Younge_merged_clean), stringsAsFactors = FALSE)
+
+#filters metadata to samples which passed the 100 read cutoff
+Younge_META <- Younge_meta_select %>% filter(Run %in% colnames(Younge_ASV))
+
+#recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
+Younge_META$Type <- Younge_META$Type %>% recode("placenta" = "Placenta", "maternal_vagina" = "Vagina")
+Younge_META <- Younge_META %>% mutate(Sample = paste(Type, Subject, sep = "-"))
+for (i in 1:length(Younge_META$Type)){
+    if (Younge_META$Type[i] == "Placenta"){
+        Younge_META$GA[i] <- "Unknown"
+        Younge_META$Delivery[i] <- "Cesarean"
+    } else {
+        Younge_META$Type[i] <- "Vagina"
+        Younge_META$GA[i] <- NA
+        Younge_META$Delivery[i] <- NA
+    }
+}
+
+#Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names. Finally reorders metadata to match for future combination.
+Younge_META$Reads <- unlist(colSums(Younge_ASV)); Younge_META$Study <- "Younge"; rownames(Younge_META) <- Younge_META$Sample; Younge_META <- Younge_META[,c(1,4,2,5:8)]
+```
+
+## V4 Subset merging {#V4merger}
+
+Now that all six studies are loaded into the R environment, we can merge the datasets by exact sequence.
+
+```{r Combination_of_V4_Studies}
+
+#combines all six studies
+V4_Combo_S6 <- combine_V4(ASV_datasets = list(Dinsdale_ASV, Olomu_ASV, Seferovic_ASV, Theis_ASV, Winters_ASV, Younge_ASV), TAX_datasets = list(Dinsdale_TAX,  Olomu_TAX, Seferovic_TAX, Theis_TAX, Winters_TAX, Younge_TAX), META_datasets = list(Dinsdale_META, Olomu_META, Seferovic_META, Theis_META, Winters_META,Younge_META))
+
+#splits object into ASV, TAX, and META parts
+V4_S6_ASV <- V4_Combo_S6$ASV; V4_S6_TAX <- V4_Combo_S6$TAX; V4_S6_META <- V4_Combo_S6$META
+
+#gives row names ASV numbers
+rownames(V4_S6_TAX) <- V4_S6_TAX$ASV
+
+#adds column which combines delivery and gestational age metadata and recodes it
+V4_S6_META <- V4_S6_META %>% mutate(Del_GA = paste(Delivery, GA))
+V4_S6_META$Del_GA <- V4_S6_META$Del_GA %>% recode(., "NA NA" = "Technical Control", "Unknown Unknown" = "Unknown")
+V4_S6_META$Del_GA <- case_when(
+  V4_S6_META$Type == "Vagina" ~ "NA",
+  V4_S6_META$Type == "Placenta" ~ V4_S6_META$Del_GA,
+  V4_S6_META$Type == "Technical Control" ~ V4_S6_META$Del_GA
+)
+
+#NCBI BLAST search reveals 100% match to Serratia marsescens type strain
+V4_S6_TAX$Genus[match(x = "ASV2555", table = V4_S6_TAX$ASV)] <- "Serratia*"
+```
+
+## V4 Normalization {#V4normalization}
+
+Now we can normalize the dataset so that sampling depth is even across all samples.
+
+```{r Normalization_of_V4_Studies}
+
+#converts dataframes to phyloseq object
+phy <- phyloseqize(merged_df = V4_S6_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = V4_S6_TAX)
+
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+
+#returns phyloseq object to merged dataframe
+merged_rare <- dephy(rarefied)
+
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+V4_rare_ASV <- merged_rare[,10:ncol(merged_rare)]; V4_rare_TAX <- merged_rare[,1:9]; V4_rare_META <- V4_S6_META %>% filter(Run %in% colnames(V4_rare_ASV))
+```
+
+## V4 Subsetting {#V4subsetting}
+
+This sub-analysis will only be evaluating placental samples and technical controls so we can subset the combined dataset to these sample types.
+
+```{r V4_Subsets}
+#subsets metadata to only placental samples and technical controls.
+V4_META_PTC <- V4_rare_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+V4_ASV_PTC <- V4_rare_ASV %>% select_if(colnames(.) %in% V4_META_PTC$Run); V4_ASV_PTC <- V4_ASV_PTC %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+V4_TAX_PTC <- V4_rare_TAX %>% filter(rownames(.) %in% rownames(V4_ASV_PTC))
+
+#only placental samples subset
+V4_META_P <- V4_rare_META %>% filter(Type == "Placenta")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+V4_ASV_P <- V4_rare_ASV %>% select_if(colnames(.) %in% V4_META_P$Run); V4_ASV_P <- V4_ASV_P %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+V4_TAX_P <- V4_rare_TAX %>% filter(rownames(.) %in% rownames(V4_ASV_P))
+
+#only technical controls subset
+V4_META_T <- V4_rare_META %>% filter(Type == "Technical Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+V4_ASV_T <- V4_rare_ASV %>% select_if(colnames(.) %in% V4_META_T$Run); V4_ASV_T <- V4_ASV_T %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+V4_TAX_T <- V4_rare_TAX %>% filter(rownames(.) %in% rownames(V4_ASV_T))
+```
+
+## V4 PCoA plots (Figure 5) {#V4PCoAs}
+
+At this point we can evaluate clustering through Principle Coordinates Analysis plots. This code produces Figure 5A, 5B, and 5C. The positions of legends and ASV labels were adjusted in Inkscape for clarity. Samples from the Winters dataset were sent to the bottom layer for easy visualization of samples from the other studies.
+
+```{r V4_PCoA_Plots}
+
+#sets the palette for plotting
+palette(c("black", "#61D04F", "#2297E6", "#28E2E5", "#e6e6e6", "#CD0BBC"))
+#plots PCoA of placental samples with technical controls
+S6_Beta_Plot_PTC <- beta_div(df = V4_ASV_PTC, df_meta = V4_META_PTC, taxa_on_rows = TRUE, type = "Study", study = "V4 PCoA Placental Samples and Technical Controls by Study", type2 = "Type", size = 2, legendyn = TRUE, Legend_Yspace = .5, inset = .18)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = S6_Beta_Plot_PTC, ASV_table = V4_ASV_PTC, TAX_table = V4_TAX_PTC, ASVs_on_rows = TRUE, ASV_with_Genus = TRUE, color = "grey", Greater_than_1per = TRUE)
+
+#evaluates dispersion between sample types
+#dispersion found to be significantly different
+disp_V4_PTC_Type <- anova(betadisper(d = vegdist(t(V4_ASV_PTC), method = "bray"), group = V4_META_PTC$Type))
+
+#performs analysis of variance between sample types using ADONIS (NPMANOVA). Samples are blocked by study.
+#variance found to be non-significant
+perm <- how(nperm = 999, blocks = with(V4_META_PTC, Study))
+set.seed(1); adonis_V4_PTC_Type <- adonis2(formula = t(V4_ASV_PTC) ~ Type, data = V4_META_PTC, method = "bray", permutations = perm)
+
+#sets the palette for plotting
+palette(c("black", "#61D04F", "#2297E6", "#28E2E5", "#e6e6e6", "#CD0BBC"))
+#plots PCoA of placental samples grouped by study
+S6_Beta_Plot_P <- beta_div(df = V4_ASV_P, df_meta = V4_META_P, taxa_on_rows = TRUE, type = "Study", all_O = TRUE, study = "V4 PCoA Placental Samples PCoA by Study", legendyn = TRUE, inset = 0.2, Legend_Yspace = .5)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = S6_Beta_Plot_P, ASV_table = V4_ASV_P, TAX_table = V4_TAX_P, ASVs_on_rows = TRUE, ASV_with_Genus = TRUE, color = "grey", Greater_than_1per = TRUE)
+
+#evaluates dispersion between sample types
+#dispersion found to be significantly different
+disp_V4_P_study <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), group = V4_META_P$Study))
+
+#performs analysis of variance between sample types using ADONIS (NPMANOVA). Samples are blocked by study.
+#variance found to be significantly different across studies
+perm <- how(nperm = 999)
+set.seed(1); adonis_V4_P_study <- adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, method = "bray", permutations = perm)
+
+#evaluates dispersion between technical controls grouped by study
+#dispersion found to be significantly different
+disp_V4_T_study <- anova(betadisper(d = vegdist(t(V4_ASV_T), method = "bray"), group = V4_META_T$Study))
+
+#performs analysis of variance between sample types using ADONIS (NPMANOVA).
+#variance found to be significantly different across studies
+set.seed(1); adonis_V4_T_study <- adonis2(formula = t(V4_ASV_T) ~ Study, data = V4_META_T, permutations = 999, method = "bray")
+
+#sets the palette for plotting
+palette(c("black", "#DF536B", "#61D04F", "#e6e6e6", "#28E2E5",  "#CD0BBC"))
+#plots PCoA of placental samples grouped by mode of delivery and gestational age
+S6_Beta_Plot_P_Del_GA <- beta_div(df = V4_ASV_P, df_meta = V4_META_P, taxa_on_rows = TRUE, type = "Del_GA", all_O = TRUE, study = "V4 Placental Samples PCoA by Study", legendyn = TRUE, inset = 0.2, Legend_Yspace = .25)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = S6_Beta_Plot_P, ASV_table = V4_ASV_P, TAX_table = V4_TAX_P, ASVs_on_rows = TRUE, ASV_with_Genus = TRUE, color = "grey", Greater_than_1per = TRUE)
+
+#evaluates dispersion between placental samples grouped by delivery
+#dispersion found to be significantly different
+disp_V4P_del <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), group = V4_META_P$Delivery))
+
+#performs pairwise analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
+#all pairwise comparsions significantly different
+set.seed(1); adonis_pw_V4P_del <- pairwise.adonis2(x = t(V4_ASV_P) ~ Delivery, data = V4_META_P)
+```
+
+## V4 Heatmaps by Study (Figure 6) {#V4Heatmaps}
+
+By visualizing ASV relative abundances across samples through heatmapping we can look closer at the ASVs which contribute to the clustering differences observed in the previous PCOA plots. Each of the following heatmaps is a panel in Figure 6.
+
+```{r V4_Heatmaps_by_Study}
+
+#samples from each study which targeted the V4 16S hypervariable region is isolated
+#taxonomy and metadata are updated by study
+#ASVs in placental samples greater than 2% mean relative abundance are highlighted
+#heatmaps are generated by study
+
+V4_Dinsdale_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Dinsdale") %>% filter(rowSums(.) > 0)
+V4_Dinsdale_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Dinsdale_ASV))
+V4_Dinsdale_META <- V4_META_PTC %>% filter(Study == "Dinsdale")
+V4_Dinsdale_ASVs <- top_ASVs_above_cutoff(ASV = V4_Dinsdale_ASV %>% select_if(V4_Dinsdale_META$Type == "Placenta"), TAX = V4_Dinsdale_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Dinsdale")
+V4_Dinsdale_heatprep <- heatmap_prep(df = V4_Dinsdale_ASV, df_tax = V4_Dinsdale_TAX, df_meta = V4_Dinsdale_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Dinsdale_ASVs$ASV)
+heatmapping(df = V4_Dinsdale_heatprep, df_meta = V4_Dinsdale_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Dinsdale")
+
+V4_Olomu_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Olomu") %>% filter(rowSums(.) > 0)
+V4_Olomu_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Olomu_ASV))
+V4_Olomu_META <- V4_META_PTC %>% filter(Study == "Olomu")
+V4_Olomu_ASVs <- top_ASVs_above_cutoff(ASV = V4_Olomu_ASV %>% select_if(V4_Olomu_META$Type == "Placenta"), TAX = V4_Olomu_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Olomu")
+V4_Olomu_heatprep <- heatmap_prep(df = V4_Olomu_ASV, df_tax = V4_Olomu_TAX, df_meta = V4_Olomu_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Olomu_ASVs$ASV)
+heatmapping(df = V4_Olomu_heatprep, df_meta = V4_Olomu_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Olomu")
+
+V4_Seferovic_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Seferovic") %>% filter(rowSums(.) > 0)
+V4_Seferovic_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Seferovic_ASV))
+V4_Seferovic_META <- V4_META_PTC %>% filter(Study == "Seferovic")
+V4_Seferovic_ASVs <- top_ASVs_above_cutoff(ASV = V4_Seferovic_ASV %>% select_if(V4_Seferovic_META$Type == "Placenta"), TAX = V4_Seferovic_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Seferovic")
+V4_Seferovic_heatprep <- heatmap_prep(df = V4_Seferovic_ASV, df_tax = V4_Seferovic_TAX, df_meta = V4_Seferovic_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Seferovic_ASVs$ASV)
+heatmapping(df = V4_Seferovic_heatprep, df_meta = V4_Seferovic_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Seferovic")
+
+V4_Theis_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Theis") %>% filter(rowSums(.) > 0)
+V4_Theis_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Theis_ASV))
+V4_Theis_META <- V4_META_PTC %>% filter(Study == "Theis")
+V4_Theis_ASVs <- top_ASVs_above_cutoff(ASV = V4_Theis_ASV %>% select_if(V4_Theis_META$Type == "Placenta"), TAX = V4_Theis_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Theis")
+V4_Theis_heatprep <- heatmap_prep(df = V4_Theis_ASV, df_tax = V4_Theis_TAX, df_meta = V4_Theis_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Theis_ASVs$ASV)
+heatmapping(df = V4_Theis_heatprep, df_meta = V4_Theis_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Theis")
+
+V4_Winters_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Winters") %>% filter(rowSums(.) > 0)
+V4_Winters_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Winters_ASV))
+V4_Winters_META <- V4_META_PTC %>% filter(Study == "Winters")
+V4_Winters_ASVs <- top_ASVs_above_cutoff(ASV = V4_Winters_ASV %>% select_if(V4_Winters_META$Type == "Placenta"), TAX = V4_Winters_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Winters")
+V4_Winters_heatprep <- heatmap_prep(df = V4_Winters_ASV, df_tax = V4_Winters_TAX, df_meta = V4_Winters_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Winters_ASVs$ASV)
+heatmapping(df = V4_Winters_heatprep, df_meta = V4_Winters_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Winters")
+
+#lists ASVs greater than 1% mean relative abundance in technical controls from each study
+#ASVs in heatmaps are modified in Inkscape with a red asterisk if greater than 2% mean relative abundance in placental samples and greater than 1% mean relative abundance in technical controls.
+#Sample type titles are replaced in Inkscape with colored bars
+V4_Studies_TC1_ASVs <- rbind(
+  top_ASVs_above_cutoff(ASV = V4_Dinsdale_ASV %>% select_if(V4_Dinsdale_META$Type == "Technical Control"), TAX = V4_Dinsdale_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Dinsdale"), 
+  top_ASVs_above_cutoff(ASV = V4_Winters_ASV %>% select_if(V4_Winters_META$Type == "Technical Control"), TAX = V4_Winters_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Winters"), 
+  top_ASVs_above_cutoff(ASV = V4_Olomu_ASV %>% select_if(V4_Olomu_META$Type == "Technical Control"), TAX = V4_Olomu_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Olomu"), 
+  top_ASVs_above_cutoff(ASV = V4_Seferovic_ASV %>% select_if(V4_Seferovic_META$Type == "Technical Control"), TAX = V4_Seferovic_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Seferovic"), 
+  top_ASVs_above_cutoff(ASV = V4_Theis_ASV %>% select_if(V4_Theis_META$Type == "Technical Control"), TAX = V4_Theis_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Theis")
+)
+```
+
+
+***
+
+# Study-by-study analysis {#sbsAnalysis}
+
+## DADA2 pipeline details {#DADA2pipeline}
+
+Each study was processed following the 1.16 DADA2 tutorial found [online](https://benjjneb.github.io/dada2/tutorial.html). Profile plots were generated for both forward and reverse read files from each sample. Sequence quality along the length of the reads was evaluated and trim lengths were determined to maximize sequence length while maximizing the number of samples left in analysis with mean sequence quality greater than 30 across the entire trimmed sequence length. After merging sequences, the distribution of sequence lengths was inspected. From that, minimum and maximum sequence lengths were set (e.g. `seqtab2 <- seqtab[,nchar(colnames(seqtab)) %in% 324:362]`) and `seqtab2` was used in place of `seqtab` in following lines of code. To help with analysis, `seqtab.nochim` was transposed with `t()` (e.g. `seqtab.nochim.t <- t(seqtab.nochim)`). A DADA2 formatted Silva v138 [database](https://zenodo.org/record/3731176#.YZgeObpOmM8) was used to classify ASVs and species assignment was attempted using the species database from the same website. Finally, `seqtab.nochim.t` was merged with the taxonomy object after species level assignment with `merged <- cbind(taxa, seqtab.nochim.t)` and the image and history were saved with `save.image()` and `savehistory()`. The `merged` object was saved as a `merged.csv` for future analysis wtih `write.csv(merged, file = "merged.csv")`. RPushbullet was used for notifications. The [link](https://github.com/eddelbuettel/rpushbullet) to github for `RPushbullet` setup.
+
+## Study specific changes {#StudyChanges}
+
+de Goffau - On the SRA run database the report of sample metadata is available for download as a `.tsv`. Select `Sample Accession`, `Secondary Sample Accession`, and `Run Accession` to utilize for the data cleaning. File generated was saved as `deGoffau_ERR-ERS.tsv`.
+
+Gomez-Arango - Publicly available samples were already merged forward and reverse reads.
+
+Leon - Samples needed to be demultiplexed: 
+
+Sequences within fastq files are named as such:
+`@ERR2531248.1 P254_0 length=369`
+In order to split sequences into individual files based on their sample name, we first have to remove the ERR numbers so that they look like so:
+`@P254_0 length=369`
+
+This is accomplished by running a line of sed code for each file with sed (GNU sed) version 4.2.1 (2009) from a linux terminal (QIIME image 1.9.1 was used):
+`sed ‘s/ERR[[:digit:]]\+.[[:digit:]]\+\s//g’ Input.fastq > Output.fastq`
+
+After installing the QIIME scripts (installation instructions found at: [QIIME Scripts](http://qiime.org/scripts/) ), split_sequence_file_on_sample_ids.py was used to partition sequences into individual sample files.
+`split_sequence_file_on_sample_ids.py -i input.fastq -o output_dir --file_type fastq`
+
+Liu - Additional Liu_Metadata2.xlsx file found as supplementary materials at [link](https://www.sciencedirect.com/science/article/pii/S2352396419307157#sec0022)
+
+Tang - Paper lists accession as SRA958249 but actual accession is listed in the table below.
+
+```{r Study_Specific_Changes}
+
+#creates data frame which tabulates all the study specific changes to the DADA2 processing pipeline
+Study_changes <- data.frame(deGoffau = c("_1.fastq", "_2.fastq", "(245,235)", "independent", "324:362"), Dinsdale = c("_1.fastq", "_2.fastq", "(230,215)", "pooled", "252:276"), `Gomez-Arango` = c(".fastq", NA, "230", "pooled", "229:231"), Lauder = c(".fastq", NA, "320", "pooled", NA), Leiby = c("_1.fastq", "_2.fastq", "(200,170)", "pooled", "298:332"), Leon = c(".fastq", NA, "360", "pooled", NA), Liu = c("_1.fastq", "_2.fastq", "(270,200)", "pooled", "398:414"), Olomu = c("_1.fastq", "_2.fastq", "(235:220)", "pooled", "252:287"), Parnell = c("_1.fastq", "_2.fastq", "(145,140)", "pooled", "164:190"), Seferovic = c("_1.fastq", "_2.fastq", "(245,230)", "pooled", "267:308"), Sterpu = c("_1.fastq", "_2.fastq", "(270,240)", "pooled", "430:440"), Tang = c("_1.fastq", "_2.fastq", "(290,250)", "pooled", "440:471"), Theis = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "252:272"), Younge = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "251:272"), Winters = c("_R1.fastq", "_R2.fastq", "(210, 100)", "pooled", "252:254"), row.names = c("Forward File Pattern", "Reverse File Pattern", "Truncation Lengths (F,R)", "DADA2 Method", "Merged Read Cutoffs (min:max)"))
+
+#creates dataframe with study data
+Study_table <- data.frame(deGoffau = c("ERP109246"), Dinsdale = c("PRJEB39698"), `Gomez-Arango` = c("PRJNA357524"), Lauder = c("PRJNA309332"), Leiby = c("PRJNA451186"), Leon = c("PRJEB25986"), Liu = c("PRJNA559967"), Olomu = c("PRJNA577959"), Parnell = c("PRJNA395716"), Seferovic = c("PRJNA511648"), Sterpu = c("PRJEB38528"), Tang = c("PRJNA564455"), Theis = c("PRJNA397876"), Younge = c("PRJNA557826"), row.names = c("Project Number"))
+```
+
+## de Goffau et al. analysis {#deGoffauAnalysis}
+
+### de Goffau et al. data cleaning {#deGoffauCleaning}
+
+Here we filter metadata to samples which pass quality filtering and remove ASVs which correspond to Salmonella bongori, which was spiked into every sample.
+
+```{r de_Goffau_Data_Cleaning}
+
+#loads DADA2 processed ASV count table and taxonomy merged together
+de_Goffau_merged <- read.csv(file = "deGoffau_merged.csv", stringsAsFactors = FALSE)
+#loads metadata associated with study and renames first column as `ERS`
+de_Goffau_meta <- read.xlsx(xlsxFile = "deGoffau Supplementary Information File 2 Updated.xlsx", sheet = "ENA link", startRow = 1066, colNames = TRUE); colnames(de_Goffau_meta)[1] <- c("ERS")
+#metadata in supplementary corresponds to ERS numbers but ASV count data corresponds to ERR numbers so we need a key to match the data. keeps last two columns and renames them
+dg_sra_key <- read.table(file = "deGoffau_ERR_to_ERS.tsv", sep = "\t", stringsAsFactors = FALSE, header = TRUE); dg_sra_key <- dg_sra_key[,2:3]; colnames(dg_sra_key) <- c("ERS", "Run")
+#merges key and metadata by ERS column
+dg_meta_merged <- merge(de_Goffau_meta, dg_sra_key, by = "ERS", sort = FALSE)
+
+#since all samples were spiked with Salmonella bongori we need to remove these ASVs.
+#First we filter the merged dataset to only those in the order Enterobacterales. Then we get the exact sequences along with the order classification
+merged_only_Entero <- de_Goffau_merged %>% filter(Order == "Enterobacterales"); dg_seqs <- merged_only_Entero$X; dg_names <- merged_only_Entero$Order
+#queries local NCBI blast database to get finer classification
+Enterobacterales_unclassified_results <- blaster(seqs = dg_seqs, names = dg_names)
+#determines which Enterobacterales were not classifed as Salmonella
+non_salmonella_Enterobacterales <- Enterobacterales_unclassified_results %>% filter(substr(`Subject Title`, 1, 6) != "Salmon")
+#prepares replacement classification at genus level
+entero_replace <- sapply(strsplit(Enterobacterales_unclassified_results$`Subject Title`, " "), `[`, 1)
+#replaces genus classifcations of ASVs classified as Enterobacterales with local blast results
+dg_merged_classified <- de_Goffau_merged %>% mutate(Genus = ifelse(Order == "Enterobacterales", entero_replace, de_Goffau_merged$Genus))
+#filters ASVs classifed as Salmonella
+dg_merged_no_Sbon <- dg_merged_classified %>% filter(Genus != "Salmonella")
+
+#cleans sequence data, adds blank species column next to rest of taxonomy, and renames rows with numbered ASVs
+de_Goffau_merged_clean <- as.data.frame(dadaset_clean(dg_merged_no_Sbon, read_thresh = 100)); de_Goffau_merged_clean$Species <- NA; de_Goffau_merged_clean <- de_Goffau_merged_clean[,c(1:7, 130, 8:129)]
+rownames(de_Goffau_merged_clean) <- paste0("ASV", 1:nrow(de_Goffau_merged_clean))
+
+#filters metadata to samples which remain after cleaning
+deGoffau_META <- dg_meta_merged %>% filter(Run %in% colnames(de_Goffau_merged_clean)[9:ncol(de_Goffau_merged_clean)])
+#recodes `type` metadata 
+deGoffau_META$Type <- case_when(
+    deGoffau_META$status == "SGA" ~ "Placenta",
+    deGoffau_META$status == "CTRL" ~ "Placenta",
+    deGoffau_META$status == "PE" ~ "Placenta",
+    is.na(deGoffau_META$status) ~ "Technical Control"
+)
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object.
+deGoffau_ASV <- de_Goffau_merged_clean[,9:ncol(de_Goffau_merged_clean)]; deGoffau_TAX <- de_Goffau_merged_clean[,1:8]
+```
+
+### de Goffau et al. Normalization {#deGoffauNormalization}
+
+Normalization is needed for placental samples due to the great variance in sampling depth
+
+```{r deGoffau_Normalization}
+
+#visualization of sampling depth variance across dataset
+table(colSums(deGoffau_ASV))
+
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = deGoffau_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = deGoffau_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+deGoffau_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; deGoffau_rare_TAX <- merged_rare[,1:8]; deGoffau_rare_META <- deGoffau_META %>% filter(Run %in% colnames(deGoffau_rare_ASV))
+```
+
+### de Goffau et al. PTCWA PCoA {#deGoffauPCoA}
+
+Code for Figure 3F
+
+```{r deGoffau_PTCWA}
+#Figure 1.3F
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+deGoffau_Beta_plot_PTC <- beta_div(df = deGoffau_rare_ASV, df_meta = deGoffau_rare_META, type = "Type", study = "de Goffau", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE, ASP = 1)
+#gets top ten ranked ASVs by mean relative abundance in the dataset
+deGoffau_topASVs <- rowSums(deGoffau_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = deGoffau_Beta_plot_PTC, ASV_table = deGoffau_rare_ASV, TAX_table = deGoffau_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(deGoffau_topASVs))
+```
+
+## Dinsdale et al. analysis {#DinsdaleAnalysis}
+
+### Dinsdale et al. data cleaning {#DinsdaleCleaning}
+
+Data was already filtered and cleaned in V4 subset section.
+
+```{r Dinsdale_Data_Cleaning}
+#removes ASV column
+Dinsdale_TAX <- Dinsdale_TAX[,-1]
+```
+
+### Dinsdale et al. subsets pre-DECONTAM {#DinsdalePreDSubsets}
+
+```{r Dinsdale_Subset_Pre-DECONTAM}
+
+#subsets metadata to only placental samples and technical controls.
+DinsdaleD_META_PTC <- Dinsdale_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+DinsdaleD_ASV_PTC <- Dinsdale_ASV %>% select_if(colnames(.) %in% DinsdaleD_META_PTC$Run); DinsdaleD_ASV_PTC <- DinsdaleD_ASV_PTC %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+DinsdaleD_TAX_PTC <- Dinsdale_TAX %>% filter(rownames(.) %in% rownames(DinsdaleD_ASV_PTC))
+```
+
+### Dinsdale et al. DECONTAM {#DinsdaleDECONTAM}
+
+Removes likely contaminants.
+
+```{r Dinsdale_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+DinsdaleD_META_PTC$Deco_type <- case_when(DinsdaleD_META_PTC$Type == "Placenta" ~ "sample", DinsdaleD_META_PTC$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Dinsdale_DECO_prep <- decontam_prep(df = cbind(DinsdaleD_TAX_PTC, DinsdaleD_ASV_PTC), meta = DinsdaleD_META_PTC, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Dinsdale <- decontam_histo_prev_plots(physeq = Dinsdale_DECO_prep, thresh = 0.2, study_name = "Dinsdale")
+#removes likely contaminants with a threshold of 0.2
+Dinsdale_decontaminated <- decontaminate(df = cbind(DinsdaleD_TAX_PTC, DinsdaleD_ASV_PTC), physeq = Dinsdale_DECO_prep, thresh = 0.2)
+#returns taxa considered to be truly in the sample
+Dinsdale_true_taxa <- Dinsdale_decontaminated$TrueTaxa
+```
+
+### Dinsdale et al. normalization {#DinsdaleNormalization}
+
+Normalizes both pre-DECONTAM dataset and dataset post-DECONTAM
+
+```{r Dinsdale_Normalization}
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Dinsdale_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Dinsdale_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Dinsdale_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Dinsdale_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Dinsdale_rare_TAX <- merged_rare[,1:8]; Dinsdale_rare_META <- Dinsdale_META %>% filter(Run %in% colnames(Dinsdale_rare_ASV))
+
+#post-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Dinsdale_true_taxa[,9:ncol(Dinsdale_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Dinsdale_true_taxa[,1:8], Dinsdale_true_taxa[,9:ncol(Dinsdale_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Dinsdale et al. post-normalization subsets {#DinsdalePostNSubsets}
+
+Top ranked ASVs are determined in placental smaples from pre- and post-DECONTAM datsets.
+
+```{r Dinsdale_post-Normalization_Subsets}
+#post-DECONTAM dataset after normalization does not need technical controls
+DinsdaleD_rare_META <- DinsdaleD_META_PTC %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+DinsdaleD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; DinsdaleD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+DinsdaleD_rare_ASV <- DinsdaleD_rare_ASV %>% select_if(colnames(.) %in% DinsdaleD_rare_META$Run); DinsdaleD_rare_ASV <- DinsdaleD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+DinsdaleD_rare_TAX <- DinsdaleD_rare_TAX %>% filter(rownames(.) %in% rownames(DinsdaleD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Dinsdale_DECO <- top_ASVs_above_cutoff(ASV = DinsdaleD_rare_ASV, TAX = DinsdaleD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Dinsdale")
+
+#pre-DECONTAM subsets
+#selects placental samples and technical controls and removes ASVs no longer in the dataset
+Dinsdale_ASV_PTC <- Dinsdale_rare_ASV %>% select_if(Dinsdale_rare_META$Type == "Placenta" | Dinsdale_rare_META$Type == "Technical Control"); Dinsdale_ASV_PTC <- Dinsdale_ASV_PTC %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Dinsdale_TAX_PTC <- Dinsdale_rare_TAX %>% filter(rownames(.) %in% rownames(Dinsdale_ASV_PTC)); Dinsdale_META_PTC <- Dinsdale_rare_META %>% filter(Run %in% colnames(Dinsdale_ASV_PTC))
+
+#selects placental samples and removes ASVs no longer in the dataset
+Dinsdale_ASV_P <- Dinsdale_rare_ASV %>% select_if(Dinsdale_rare_META$Type == "Placenta"); Dinsdale_ASV_P <- Dinsdale_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Dinsdale_TAX_P <- Dinsdale_rare_TAX %>% filter(rownames(.) %in% rownames(Dinsdale_ASV_P)); Dinsdale_META_P <- Dinsdale_rare_META %>% filter(Run %in% colnames(Dinsdale_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM placental samples dataset
+Top5_Dinsdale <- top_ASVs_above_cutoff(ASV = Dinsdale_ASV_P, TAX = Dinsdale_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Dinsdale")
+```
+
+### Dinsdale et al. PCoAs {#DinsdalePCoAs}
+
+Code for Figures 3D and 4D
+
+```{r Dinsdale_PCoAs}
+
+#Figure 3D Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Dinsdale_Beta_plot_PTCWA <- beta_div(df = Dinsdale_ASV_PTC, df_meta = Dinsdale_META_PTC, type = "Type", study = "Dinsdale", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Dinsdale_topASVs <- rowSums(Dinsdale_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Dinsdale_Beta_plot_PTCWA, ASV_table = Dinsdale_ASV_PTC, TAX_table = Dinsdale_TAX_PTC, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Dinsdale_topASVs))
+
+#Figure 4D Placental Samples/Technical Controls/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "black", "blue"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Dinsdale_Beta_plot_PTCVWA <- beta_div(df = Dinsdale_rare_ASV, df_meta = Dinsdale_rare_META, type = "Type", study = "Dinsdale", all_O = TRUE, taxa_on_rows = TRUE, size = 2)
+#returns top ten ranked ASVs in placental samples and technical controls
+Dinsdale_top10ASV_PTC <- rowSums(Dinsdale_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns top ten ranked ASVs in vaginal swab samples 
+Dinsdale_top10ASV_V <- rowSums(Dinsdale_rare_ASV %>% select_if(Dinsdale_rare_META$Type == "Vaginal Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared ASVs between the sample types
+Dinsdale_top10shared <- Dinsdale_top10ASV_PTC[names(Dinsdale_top10ASV_PTC) %in% names(Dinsdale_top10ASV_V)]
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Dinsdale_Beta_plot_PTCVWA, ASV_table = Dinsdale_rare_ASV, TAX_table = Dinsdale_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Dinsdale_top10shared))
+```
+
+## Gomez-Arango et al. analysis {#GomezArangoAnalysis}
+
+### Gomez-Arango et al. data cleaning {#GomezArangoCleaning}
+
+Data is cleaned.
+
+```{r Gomez_Arango_Data_Cleaning}
+
+#loads DADA2 processed ASV count table and taxonomy merged together
+GA_merged <- read.csv("GomezArango_merged.csv", stringsAsFactors = FALSE)
+#Loads metadata
+GA_meta <- read.csv(file = "GomezArango_SraRunTable.csv", stringsAsFactors = FALSE)
+#cleans sequence data and renames rows with numbered ASVs
+GA_merged_clean <- dadaset_clean(GA_merged, read_thresh = 100); rownames(GA_merged_clean) <- paste0("ASV", 1:nrow(GA_merged_clean))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
+Gomez_Arango_ASV <- GA_merged_clean[,9:ncol(GA_merged_clean)]; Gomez_Arango_TAX <- GA_merged_clean[,1:8]
+
+#selects columns from metadata
+Gomez_Arango_META <- GA_meta %>% select_if(colnames(.) %in% c("Run", "Sample.Name", "Tissue"))
+#`Sample.Name` column split into `Subject ID` and `Source` columns
+Gomez_Arango_META$Subject_ID <- sub(pattern = "(\\D+)(_)(\\d*)", x = Gomez_Arango_META$Sample.Name, replacement = "\\3"); Gomez_Arango_META$Source <- sub(pattern = "(\\D+)(_)(\\d*)", x = Gomez_Arango_META$Sample.Name, replacement = "\\1")
+#`Type` column generated from `Tissue` and `Source` columns
+Gomez_Arango_META <- Gomez_Arango_META %>% mutate(Type = paste(Tissue, Source, sep = " "))
+#filters metadata to samples left in ASV count table
+Gomez_Arango_META <- Gomez_Arango_META %>% filter(Run %in% colnames(Gomez_Arango_ASV))
+
+#Reclassifies ASV186 Lactobacillales which shares 99.13% identity to multiple type strains of Lactobacillus 
+Gomez_Arango_TAX$Genus[match("ASV186", rownames(Gomez_Arango_TAX))] <- "Lactobacillus*"
+#Reclassifies ASV96 Pseudomonadaceae which shares 99.57% identity to multiple type strains of Pseudomonas
+Gomez_Arango_TAX$Genus[match("ASV96", rownames(Gomez_Arango_TAX))] <- "Pseudomonas*"
+#Reclassifies ASV33 Lactobacillales which shares 99.13% identity to multiple type strains of Lactobacillus
+Gomez_Arango_TAX$Genus[match("ASV33", rownames(Gomez_Arango_TAX))] <- "Lactobacillus*"
+```
+
+### Gomez-Arango et al. normalization {#GomezArangoNormalization}
+
+Normalizes data.
+
+```{r Gomez_Arango_Normalization}
+
+#visualization of sampling depth variance across dataset
+table(colSums(Gomez_Arango_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Gomez_Arango_ASV, taxa_as_rows = TRUE, tax_df = Gomez_Arango_TAX, keep_ASV_nums = TRUE)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+GomezArango_rare_TAX <- merged_rare[,1:8]; GomezArango_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; GomezArango_rare_META <- Gomez_Arango_META %>% filter(Run %in% colnames(GomezArango_rare_ASV))
+```
+
+### Gomez-Arango et al. subsetting {#GomezArangoSubsetting}
+
+Subsets dataset to placental samples
+
+```{r Gomez_Arango_Subset}
+
+#subsets metadata to placental samples
+GA_META_P <- GomezArango_rare_META %>% filter(Type == "Placenta maternal")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+GA_ASV_P <- GomezArango_rare_ASV %>% select_if(GomezArango_rare_META$Type == "Placenta maternal"); GA_ASV_P <- GA_ASV_P %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+GA_TAX_P <- GomezArango_rare_TAX %>% filter(rownames(.) %in% rownames(GA_ASV_P))
+
+#stores top five ranked ASVs by mean relative abundance in placental samples dataset
+Top5_GomezArango <- top_ASVs_above_cutoff(ASV = GA_ASV_P, TAX = GA_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Gomez-Arango")
+
+#ASVs were queried with NCBI BLAST. Asterisk is to clarify
+#Top5_GomezArango$Genus[c(1,2)] <- c("Pseudomonas*", "Lactobacillus*")
+```
+
+## Lauder et al. analysis {#LauderAnalysis}
+
+### Lauder data cleaning {#LauderCleaning}
+
+Here we filter samples to those which pass quality filtering
+
+```{r Lauder_data_cleaning}
+
+#Loads both sequence and metadata
+Lauder_merged <- read.csv("Lauder_merged.csv", stringsAsFactors = FALSE); Lauder_meta <- read.csv("Lauder_SraRunTable.csv", stringsAsFactors = FALSE)
+
+#filters samples in metadata to those in ASV count table and removes salivary samples
+Lauder_META <- Lauder_meta %>% filter(Run %in% colnames(Lauder_merged[,9:ncol(Lauder_merged)])); Lauder_META <-Lauder_META %>% filter(Isolation_source != "saliva")
+
+#removes salivary samples from ASV count table
+Lauder_merged <- cbind(Lauder_merged[,1:8], Lauder_merged %>% select_if(colnames(.) %in% Lauder_META$Run))
+#cleans sequence data and renames rows with numbered ASVs
+Lauder_merged_clean <- dadaset_clean(df = Lauder_merged, read_thresh = 100); rownames(Lauder_merged_clean) <- paste0("ASV", 1:nrow(Lauder_merged_clean))
+
+#Reclassifies ASV188 Lachnospiraceae which shares 99.38% identity to Blautia stercoris JCM 17204
+Lauder_merged_clean$Genus[match("ASV188", rownames(Lauder_merged_clean))] <- "Blautia*"
+
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object.
+Lauder_ASV <- Lauder_merged_clean[,9:ncol(Lauder_merged_clean)]; Lauder_TAX <- Lauder_merged_clean[,1:8]
+
+
+#subsets metadata to pertinent variables, filters samples to those in ASV count table, and recodes `Type` column
+Lauder_META <- Lauder_META %>% select_if(colnames(.) %in% c("Run", "Sample.Name", "Isolation_source", "SubjectID")); Lauder_META <- Lauder_META %>% filter(Run %in% colnames(Lauder_merged_clean[,9:ncol(Lauder_merged_clean)]))
+Lauder_META$Type <- case_when(
+    str_detect(string = Lauder_META$Sample.Name, pattern = "[Aa]ir") ~ "Technical Control",
+    str_detect(string = Lauder_META$Sample.Name, pattern = "\\b[ACNue]") ~ "Technical Control",
+    str_detect(string = Lauder_META$Sample.Name, pattern = "\\b(B.blank)") ~ "Technical Control",
+    str_detect(string = Lauder_META$Sample.Name, pattern = "\\b([FM]SB)") ~ "Technical Control",
+    str_detect(string = Lauder_META$Sample.Name, pattern = "\\b(Fetal|Maternal)") ~ "Placenta",
+    str_detect(string = Lauder_META$Sample.Name, pattern = "\\bV") ~ "Vaginal Swab")
+
+
+```
+
+### Lauder subset pre-DECONTAM {#LauderPreDSubsets}
+
+```{r Lauder_subset_pre-DECONTAM}
+
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+LauderD_ASV_PTC <- Lauder_merged_clean[,9:ncol(Lauder_merged_clean)] %>% select_if(Lauder_META$Type == "Placenta" | Lauder_META$Type == "Technical Control"); LauderD_ASV_PTC <- LauderD_ASV_PTC %>% filter(rowSums(.) > 0)
+#subsets metadata to only placental samples and technical controls.
+LauderD_META_PTC <- Lauder_META %>% filter(Run %in% colnames(LauderD_ASV_PTC))
+#filters taxonomy to match remaining ASVs in ASV count table
+LauderD_TAX_PTC <- Lauder_merged_clean[,1:8] %>% filter(rownames(.) %in% rownames(LauderD_ASV_PTC))
+```
+
+### Lauder DECONTAM {#LauderDECONTAM}
+
+Removes likely contaminants.
+
+```{r Lauder_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+LauderD_META_PTC$Deco_type <- case_when(LauderD_META_PTC$Type == "Placenta" ~ "sample", LauderD_META_PTC$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Lauder_DECO_prep <- decontam_prep(df = cbind(LauderD_TAX_PTC, LauderD_ASV_PTC), meta = LauderD_META_PTC, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Lauder <- decontam_histo_prev_plots(physeq = Lauder_DECO_prep, thresh = 0.1, study_name = "Lauder")
+#removes likely contaminants with a threshold of 0.1
+Lauder_decontaminated <- decontaminate(df = Lauder_merged_clean, physeq = Lauder_DECO_prep, thresh = 0.1)
+#returns taxa considered to be truly in the sample
+Lauder_true_taxa <- Lauder_decontaminated$TrueTaxa
+```
+
+### Lauder normalization {#LauderNormalization}
+
+Here we normalize the data due to sample sequencing depth variance.
+
+```{r Lauder_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Lauder_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Lauder_ASV, tax_df = Lauder_TAX, taxa_as_rows = TRUE, keep_ASV_nums = TRUE)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Lauder_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Lauder_rare_TAX <- merged_rare[,1:8]; Lauder_rare_META <- Lauder_META %>% filter(Run %in% colnames(Lauder_rare_ASV))
+
+#post-DECONTAM normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Lauder_true_taxa[,9:ncol(Lauder_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Lauder_true_taxa[,1:8], Lauder_true_taxa[,9:ncol(Lauder_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Lauder post-normalization subsets {#LauderPostNSubsets}
+
+```{r Lauder_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+LauderD_rare_META <- LauderD_META_PTC %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+LauderD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; LauderD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+LauderD_rare_ASV <- LauderD_rare_ASV %>% select_if(colnames(.) %in% LauderD_rare_META$Run); LauderD_rare_ASV <- LauderD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+LauderD_rare_TAX <- LauderD_rare_TAX %>% filter(rownames(.) %in% rownames(LauderD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Lauder_DECO <- top_ASVs_above_cutoff(ASV = LauderD_rare_ASV, TAX = LauderD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Lauder")
+
+#pre-DECONTAM post-normalization subsets
+#selects placental samples and technical controls and removes ASVs no longer in the dataset
+Lauder_ASV_PTC <- Lauder_rare_ASV %>% select_if(Lauder_rare_META$Type == "Placenta" | Lauder_rare_META$Type == "Technical Control"); Lauder_ASV_PTC <- Lauder_ASV_PTC %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Lauder_TAX_PTC <- Lauder_rare_TAX %>% filter(rownames(.) %in% rownames(Lauder_ASV_PTC)); Lauder_META_PTC <- Lauder_rare_META %>% filter(Run %in% colnames(Lauder_ASV_PTC))
+
+#selects only placental samples and removes ASVs no longer in the dataset
+Lauder_ASV_P <- Lauder_rare_ASV %>% select_if(Lauder_rare_META$Type == "Placenta"); Lauder_ASV_P <- Lauder_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Lauder_META_P <- Lauder_rare_META %>% filter(Type == "Placenta"); Lauder_TAX_P <- Lauder_rare_TAX %>% filter(rownames(.) %in% rownames(Lauder_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Lauder <- top_ASVs_above_cutoff(ASV = Lauder_ASV_P, TAX = Lauder_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Lauder")
+```
+
+### Lauder PCoAs {#LauderPCoAs}
+
+Code for Figures 3A and 4A
+
+```{r Lauder_PCoAs}
+
+#Figure 3A Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Lauder_Beta_plot_PTCWA <- beta_div(df = Lauder_ASV_PTC, df_meta = Lauder_META_PTC, type = "Type", study = "Lauder", all_O = TRUE, taxa_on_rows = TRUE, size = 2)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Lauder_topASVs <- rowSums(Lauder_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Lauder_Beta_plot_PTCWA, ASV_table = Lauder_ASV_PTC, TAX_table = Lauder_TAX_PTC, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Lauder_topASVs))
+
+#Figure 4A Placental Samples/Technical Controls/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "black", "blue"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Lauder_Beta_plot_PTCVWA <- beta_div(df = Lauder_rare_ASV, df_meta = Lauder_rare_META, type = "Type", study = "Lauder", all_O = TRUE, taxa_on_rows = TRUE, size = 2, Legend_Yspace = .5)
+#returns top ten ranked ASVs in placental samples and technical controls
+Lauder_top10ASV_PTC <- rowSums(Lauder_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns top ten ranked ASVs in vaginal swab samples 
+Lauder_top10ASV_V <- rowSums(Lauder_rare_ASV %>% select_if(Lauder_rare_META$Type == "Vaginal Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared ASVs between the sample types
+Lauder_top10shared <- Lauder_top10ASV_PTC[names(Lauder_top10ASV_PTC) %in% names(Lauder_top10ASV_V)]
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Lauder_Beta_plot_PTCVWA, ASV_table = Lauder_rare_ASV, TAX_table = Lauder_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Lauder_top10shared))
+```
+
+## Leiby et al. analysis {#LeibyAnalysis}
+
+### Leiby et al. data cleaning {#LeibyCleaning}
+
+```{r Leiby_data_cleaning}
+
+#Loads both sequence and metadata
+Leiby_merged <- read.csv("Leiby_merged.csv", stringsAsFactors = FALSE); Leiby_meta <- read.csv("Leiby_SraRunTable.csv", stringsAsFactors = FALSE)
+#additional supplementary table from Leiby supplementary materials
+Leiby_meta_supp <- read_xls("Leiby_Additional_file_1.xls", sheet = "Table S11")
+#subsets supplementary metadata and renames columns
+Leiby_meta_supp <- Leiby_meta_supp[,c("Group", "#SampleID", "Case/Control", "delivery")]; colnames(Leiby_meta_supp) <- c("Subject", "Sample.Name", "GA", "Delivery")
+
+#TO BE REMOVED
+#internal command to remove prefixes from columnnames and reorder columns. Others will not have to run this.
+colnames(Leiby_merged)[9:ncol(Leiby_merged)] <- sub(pattern = "(\\D+)(.)(SRR\\S+)", replacement = "\\3", x = colnames(Leiby_merged)[9:ncol(Leiby_merged)])
+Leiby_asv <- Leiby_merged[,9:ncol(Leiby_merged)]; Leiby_asv <- Leiby_asv[, order(colnames(Leiby_asv))]; Leiby_merged <- cbind(Leiby_merged[,1:8], Leiby_asv)
+
+##cleans sequence data and renames rows with numbered ASVs
+Leiby_merged_clean <- dadaset_clean(df = Leiby_merged, read_thresh = 100); rownames(Leiby_merged_clean) <- paste0("ASV", 1:nrow(Leiby_merged_clean))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Leiby_ASV <- Leiby_merged_clean[,9:ncol(Leiby_merged_clean)]; Leiby_TAX <- Leiby_merged_clean[,1:8]
+
+#subsets metadata to pertinent variables, filters samples to those in ASV count table
+Leiby_META <- Leiby_meta %>% select_if(colnames(.) %in% c("Run", "Sample.Name", "Host")); Leiby_META <- Leiby_META %>% filter(Run %in% colnames(Leiby_ASV))
+#merges supplementary metadata with metadata and gives sample names as rownames
+Leiby_META <- merge(Leiby_META, Leiby_meta_supp, by.x = "Sample.Name", sort = FALSE); rownames(Leiby_META) <- Leiby_META$Sample.Name
+#recodes subject metadata
+for(i in 1:nrow(Leiby_META)){
+    if(Leiby_META$Host[i] == ""){
+        Leiby_META$Subject[i] <- NA
+    }
+}
+#recodes `Type` metadata
+Leiby_META$Type <- case_when(
+    str_detect(string = Leiby_META$Sample.Name, pattern = "VS") ~ "Vaginal Swab",
+    str_detect(string = Leiby_META$Sample.Name, pattern = "[FM]P\\d+") ~ "Placenta",
+    str_detect(string = Leiby_META$Sample.Name, pattern = "[HAB]") ~ "Technical Control"
+)
+#adds combined Delivery/Gestation Age column
+Leiby_META <- Leiby_META %>% mutate(Del_GA = paste(Delivery, GA, sep = " "))
+#adds a column for Type/Delivery/Gestational Age
+Leiby_META <- Leiby_META %>% mutate(Type_Del_GA = paste(Type, Delivery, GA, sep = " "))
+Leiby_META<- Leiby_META %>% mutate(Type_Del_GA = case_when(
+  str_detect(string = Leiby_META$Type, pattern = "^T") ~ "Technical Control",
+  str_detect(string = Leiby_META$Type, pattern = "^V") ~ "Vaginal Swab",
+  str_detect(string = Leiby_META$Type, pattern = "^P") ~ Type_Del_GA
+))
+
+#Reclassifies ASV433 which shares 99.05% identity to type strain Planococcus.
+Leiby_TAX$Genus[match(x = "ASV433", table = rownames(Leiby_TAX))] <- "Planococcus*"
+```
+
+### Leiby et al. subset pre-DECONTAM {#LeibyPreDSubsets}
+
+```{r Leiby_subset_pre-DECONTAM}
+
+#subsets metadata to placental samples and technical controls.
+LeibyD_META_PTC <- Leiby_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+LeibyD_ASV_PTC <- Leiby_ASV %>% select_if(colnames(.) %in% LeibyD_META_PTC$Run); LeibyD_ASV_PTC <- LeibyD_ASV_PTC %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+LeibyD_TAX_PTC <- Leiby_TAX %>% filter(rownames(.) %in% rownames(LeibyD_ASV_PTC))
+```
+
+### Leiby et al. DECONTAM {#LeibyDECONTAM}
+
+```{r Leiby DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+LeibyD_META_PTC$Deco_type <- case_when(LeibyD_META_PTC$Type == "Placenta" ~ "sample", LeibyD_META_PTC$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Leiby_DECO_prep <- decontam_prep(df = cbind(LeibyD_TAX_PTC, LeibyD_ASV_PTC), meta = LeibyD_META_PTC, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Leiby <- decontam_histo_prev_plots(physeq = Leiby_DECO_prep, thresh = 0.17, study_name = "Leiby")
+#removes likely contaminants with a threshold of 0.17
+Leiby_decontaminated <- decontaminate(df = cbind(LeibyD_TAX_PTC, LeibyD_ASV_PTC), physeq = Leiby_DECO_prep, thresh = 0.17)
+#returns taxa considered to be truly in the sample
+Leiby_true_taxa <- Leiby_decontaminated$TrueTaxa
+```
+
+### Leiby et al. normalization {#LeibyNormalization}
+
+``` {r Leiby_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Leiby_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Leiby_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Leiby_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, sample.size = max(c(min(sample_sums(phy)), 100)), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Leiby_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Leiby_rare_TAX <- merged_rare[,1:8]; Leiby_rare_META <- Leiby_META %>% filter(Run %in% colnames(Leiby_rare_ASV))
+
+#post-DECONTAM Normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Leiby_true_taxa[,9:ncol(Leiby_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Leiby_true_taxa[,1:8], Leiby_true_taxa[,9:ncol(Leiby_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Leiby et al. post-Normalization subsets {#LeibyPostNSubsets}
+
+```{r Leiby_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+LeibyD_rare_META <- Leiby_META %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+LeibyD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; LeibyD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+LeibyD_rare_ASV <- LeibyD_rare_ASV %>% select_if(colnames(.) %in% LeibyD_rare_META$Run); LeibyD_rare_ASV <- LeibyD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+LeibyD_rare_TAX <- LeibyD_rare_TAX %>% filter(rownames(.) %in% rownames(LeibyD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Leiby_DECO <- top_ASVs_above_cutoff(ASV = LeibyD_rare_ASV, TAX = LeibyD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Leiby")
+
+#pre-DECONTAM post-normalization subsets
+#selects placental samples and technical controls and removes samples no longer in the metadata
+Leiby_META_PTC <- Leiby_rare_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#updates ASV count table and removes ASVs no longer in the dataset
+Leiby_ASV_PTC <- Leiby_rare_ASV %>% select_if(colnames(.) %in% Leiby_META_PTC$Run); Leiby_ASV_PTC <- Leiby_ASV_PTC %>% filter(rowSums(.) > 0)
+#updates taxonomy to match ASV count table
+Leiby_TAX_PTC <- Leiby_rare_TAX %>% filter(rownames(.) %in% rownames(Leiby_ASV_PTC))
+
+
+#Only Placental Subset
+Leiby_ASV_P <- Leiby_rare_ASV %>% select_if(Leiby_rare_META$Host != "" & !str_detect(string = Leiby_rare_META$Sample.Name, pattern = "VS")); Leiby_ASV_P <- Leiby_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Leiby_META_P <- Leiby_rare_META %>% filter(Run %in% colnames(Leiby_ASV_P)); Leiby_TAX_P <- Leiby_rare_TAX %>% filter(rownames(.) %in% rownames(Leiby_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Leiby <- top_ASVs_above_cutoff(ASV = Leiby_ASV_P, TAX = Leiby_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Leiby")
+```
+
+### Leiby et al. PCoAs {#LeibyPCoAs}
+
+Code for Figures 3B and 4B
+
+```{r Leiby_PCoAs}
+
+#Figure 3B Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Leiby_Beta_plot_PTCWA <- beta_div(df = Leiby_ASV_PTC, df_meta = Leiby_META_PTC, type = "Type", study = "Leiby", inset = 0, all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Leiby_topASVs <- rowSums(Leiby_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Leiby_Beta_plot_PTCWA, ASV_table = Leiby_ASV_PTC, TAX_table = Leiby_TAX_PTC, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Leiby_topASVs))
+
+#Fig 4B Leiby Placental Samples/Technical Controls/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black", "blue"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Leiby_Beta_plot_PTCVWA <- beta_div(Leiby_rare_ASV, df_meta = Leiby_rare_META, type = "Type", study = "Leiby", all_O = TRUE, taxa_on_rows = TRUE, size = 2, Legend_Yspace = .5)
+#returns top ten ranked ASVs in placental samples and technical controls
+Leiby_top10ASV_PTC <- rowSums(Leiby_rare_ASV %>% select_if(Leiby_rare_META$Type == "Technical Control" | Leiby_rare_META$Type == "Placenta")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns top ten ranked ASVs in vaginal swab samples 
+Leiby_top10ASV_V <- rowSums(Leiby_rare_ASV %>% select_if(Leiby_rare_META$Type == "Vaginal Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared ASVs between the sample types
+Leiby_top10_shared <- Leiby_top10ASV_PTC[names(Leiby_top10ASV_PTC) %in% names(Leiby_top10ASV_V)]
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Leiby_Beta_plot_PTCVWA, ASV_table = Leiby_rare_ASV, TAX_table = Leiby_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Leiby_top10_shared))
+```
+
+## Leon et al. analysis {#LeonAnalysis}
+
+### Leon et al. data cleaning {#LeonCleaning}
+
+```{r Leon_Data_Cleaning}
+
+#Loads sequence data
+Leon_merged <- read.csv(file = "Leon_merged.csv", stringsAsFactors = FALSE)
+#metadata taken from sample column names in merged data
+Leon_meta <- data.frame(Sample = colnames(Leon_merged[,9:ncol(Leon_merged)]))
+#adds Run data from `Sample` column
+Leon_meta$Run <- gsub(pattern = "\\b(Run[1234])(_)(\\S*)", replacement = "\\1", x = Leon_meta$Sample)
+#replaces sample column with only sample names
+Leon_meta$Sample <- gsub(pattern = "\\b(Run[1234])(_)(\\S*)", replacement = "\\3", x = Leon_meta$Sample)
+#filters metadata to samples from runs 1 and 4, which had the highest quality
+Leon_meta <- Leon_meta %>% filter(Run %in% c("Run1", "Run4"))
+#replaces lowercase `p` with uppercase `P`
+Leon_meta$Sample[match("p339", table = Leon_meta$Sample)] <- "P339"
+
+#determines which samples are from run 4 and run 1
+Run4_samples <- Leon_meta %>% filter(Run == "Run4") %>% pull(Sample); Run1_samples <- Leon_meta %>% filter(Run == "Run1") %>% pull(Sample)
+#determines the indices of shared samples which are in both runs, and removes run 4 samples from metadata which were also processed in run 1
+Shared_Samples <- Run4_samples[Run4_samples %in% Run1_samples]; shared_indices <- which(Leon_meta$Sample %in% Shared_Samples); shared_indices <- shared_indices[shared_indices > 256]; Leon_meta <- Leon_meta[-c(shared_indices),]
+#removes mock samples from metadata
+Leon_meta <- Leon_meta[!grepl(pattern = "\\bM", x = Leon_meta$Sample),]
+#recodes type column
+Leon_meta$Type <- case_when( 
+str_detect(Leon_meta$Sample,"\\bN") ~ "Technical Control", 
+str_detect(Leon_meta$Sample, "\\bW") ~ "Technical Control", 
+str_detect(Leon_meta$Sample, "\\b[PV]") ~ "Placenta")
+
+#filters merged data to samples in metadata
+Leon_merged <- cbind(Leon_merged[,1:8], Leon_merged[,9:ncol(Leon_merged)] %>% select_if(toupper(colnames(.)) %in% toupper(paste(Leon_meta$Run, Leon_meta$Sample, sep = "_"))))
+
+#cleans sequence data and renames rows with numbered ASVs
+Leon_merged_clean <- dadaset_clean(df = Leon_merged, read_thresh = 100); rownames(Leon_merged_clean) <- paste0("ASV", 1:nrow(Leon_merged_clean))
+#renames column names in merged dataset
+colnames(Leon_merged_clean)[9:ncol(Leon_merged_clean)] <- toupper(gsub(pattern = "\\b(Run[1234])(_)(\\S*)", replacement = "\\3", x = colnames(Leon_merged_clean)[9:ncol(Leon_merged_clean)]))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Leon_ASV <- Leon_merged_clean[,9:ncol(Leon_merged_clean)]; Leon_TAX <- Leon_merged_clean[,1:8]
+
+#filters metadata to those in ASV count table
+Leon_META <- Leon_meta %>% filter((Sample) %in% colnames(Leon_merged_clean))
+```
+
+### Leon et al. DECONTAM {#LeonDECONTAM}
+
+```{r Leon_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+Leon_META$Deco_type <- case_when(
+  Leon_META$Type == "Placenta" ~ "sample", 
+  Leon_META$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Leon_DECO_prep <- decontam_prep(df = Leon_merged_clean, meta = Leon_META, type = "Deco_type", sample_col = "Sample")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Leon <- decontam_histo_prev_plots(physeq = Leon_DECO_prep, thresh = 0.19, study_name = "Leon")
+#removes likely contaminants with a threshold of 0.19
+Leon_decontaminated <- decontaminate(df = Leon_merged_clean, physeq = Leon_DECO_prep, thresh = 0.19)
+#returns taxa considered to be truly in the sample
+Leon_true_taxa <- Leon_decontaminated$TrueTaxa
+```
+
+### Leon et al. normalization {#LeonNormalization}
+```{r Leon_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Leon_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Leon_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Leon_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Leon_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Leon_rare_TAX <- merged_rare[,1:8]; Leon_rare_META <- Leon_META %>% filter(Sample %in% colnames(Leon_rare_ASV))
+
+#post-DECONTAM Normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Leon_true_taxa[,9:ncol(Leon_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(Leon_true_taxa)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Leon et al. post-normalization subsets {#LeonPostNSubsets}
+
+```{r Leon_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+LeonD_rare_META <- Leon_META %>% filter(Sample %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+LeonD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; LeonD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+LeonD_rare_ASV <- LeonD_rare_ASV %>% select_if(colnames(.) %in% LeonD_rare_META$Sample); LeonD_rare_ASV <- LeonD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+LeonD_rare_TAX <- LeonD_rare_TAX %>% filter(rownames(.) %in% rownames(LeonD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Leon_DECO <- top_ASVs_above_cutoff(ASV = LeonD_rare_ASV, TAX = LeonD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Leon")
+
+#Only Placental Subset
+Leon_ASV_P <- Leon_rare_ASV %>% select_if(Leon_rare_META$Type == "Placenta"); Leon_ASV_P <- Leon_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Leon_META_P <- Leon_rare_META %>% filter(Type == "Placenta"); Leon_TAX_P <- Leon_rare_TAX %>% filter(rownames(.) %in% rownames(Leon_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Leon <- top_ASVs_above_cutoff(ASV = Leon_ASV_P, TAX = Leon_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Leon")
+```
+
+### Leon et al. PCoA {#LeonPCoA}
+
+Code for Figure 3C
+
+```{r Leon_PCoA}
+
+#Figure 3C
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Leon_Beta_plot_PTCWA <- beta_div(df = Leon_rare_ASV, df_meta = Leon_rare_META, type = "Type", study = "Leon", all_O = TRUE, taxa_on_rows = TRUE, legendyn = FALSE, size = 2)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Leon_topASVs <- rowSums(Leon_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Leon_Beta_plot_PTCWA, ASV_table = Leon_rare_ASV, TAX_table = Leon_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Leon_topASVs))
+```
+
+## Liu et al. analysis {#LiuAnalysis}
+
+### Liu et al. data cleaning {#LiuCleaning}
+
+```{r Liu_Data_Cleaning}
+
+#Loads both sequence and metadata and supplementary metadata
+Liu_merged <- read.csv(file = "Liu_merged.csv", stringsAsFactors = FALSE); Liu_meta <- read.csv(file = "Liu_SraRunTable.csv", stringsAsFactors = FALSE); Liu_meta_supp <- read.xlsx("Liu_Metadata2.xlsx")
+#renames columns with first row of supplementary metadata and trims rows to actual samples
+colnames(Liu_meta_supp) <- Liu_meta_supp[1,];colnames(Liu_meta_supp)[c(1,7)] <- c("Sample", "Delivery"); Liu_meta_supp <- Liu_meta_supp[3:80,]; rownames(Liu_meta_supp) <- 1:78; Liu_meta_supp$Sample <- paste0(Liu_meta_supp$Sample, "p"); Liu_meta_supp <- Liu_meta_supp[,c(1:8,11)]
+#selects columns from metadata and renames them
+Liu_meta <- Liu_meta %>% select_if(colnames(.) %in% c("Run", "Library.Name")); colnames(Liu_meta)[2] <- "Sample"
+#filters metadata to only placental samples and removes trailing `p`
+Liu_meta <- Liu_meta[grepl(pattern = "(\\D)(\\d+)([py])", x = Liu_meta$Sample),];Liu_meta$Type <- case_when(
+  str_detect(string = Liu_meta$Sample, pattern = "p$") ~ "Placenta",
+  str_detect(string = Liu_meta$Sample, pattern = "y$") ~ "Vaginal Swab"
+) 
+#merges metadata and supplemental metadata and orders the data by run
+Liu_meta <- merge(Liu_meta, Liu_meta_supp, by = "Sample", all.x = TRUE); Liu_meta <- Liu_meta[order(Liu_meta$Run),]
+#removes trailing `p` and `y`
+Liu_meta$Sample <- sub(pattern = "(\\D)(\\d+)([py])", replacement = "\\1\\2", x = Liu_meta$Sample)
+
+#filters merged data to samples in metadata
+Liu_merged <- cbind(Liu_merged[,1:8], Liu_merged %>% select_if(colnames(.) %in% Liu_meta$Run))
+#cleans sequence data, renames rows with numbered ASVs, and adds empty species column to taxonomy
+Liu_merged_clean <- dadaset_clean(Liu_merged, read_thresh = 100); rownames(Liu_merged_clean) <- paste0("ASV", 1:nrow(Liu_merged_clean)); 
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Liu_ASV <- Liu_merged_clean[,8:ncol(Liu_merged_clean)]; Liu_TAX <- Liu_merged_clean[,1:7]
+
+#filters metadata to samples in ASV count table
+Liu_META <- Liu_meta %>% filter(Run %in% colnames(Liu_ASV))
+
+#Reclassifies ASV2 Enterobacterales which shares 99.74% identity with Pantoea agglomerans strain ATCC 27155
+Liu_TAX$Genus[match("ASV2", rownames(Liu_TAX))] <- "Pantoea*"
+#Reclassifies ASV22 Enterobacterales which shares 99.49% identity with Pantoea agglomerans strain ATCC 27155
+Liu_TAX$Genus[match("ASV22", rownames(Liu_TAX))] <- "Pantoea*"
+#Reclassifies ASV178 Enterobacterales which shares 99.74% identity with Pantoea agglomerans strain ATCC 27155
+Liu_TAX$Genus[match("ASV178", rownames(Liu_TAX))] <- "Pantoea*"
+```
+
+### Liu et al. normalization {#LiuNormalization}
+
+```{r Liu_Normalization}
+
+#visualization of sampling depth variance across dataset
+table(colSums(Liu_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Liu_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Liu_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied); merged_rare[,1:7] <- lapply(merged_rare[,1:7], as.character)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Liu_rare_ASV <- merged_rare[,8:ncol(merged_rare)]; Liu_rare_TAX <- merged_rare[,1:7]; Liu_rare_META <- Liu_META %>% filter(Run %in% colnames(Liu_rare_ASV))
+```
+
+### Liu et al. post-normalization subsets {#LiuPostNSubsets}
+
+```{r Liu_post-Normalization_Subsets}
+
+#Liu Placental samples subset
+Liu_META_P <- Liu_rare_META %>% filter(Type == "Placenta")
+#selects placental samples in ASV count table and removes ASVs no longer present in samples
+Liu_ASV_P <- Liu_rare_ASV %>% select_if(colnames(.) %in% Liu_META_P$Run); Liu_ASV_P <- Liu_ASV_P %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+Liu_TAX_P <- Liu_rare_TAX %>% filter(rownames(.) %in% rownames(Liu_ASV_P))
+
+#strictly Cesarean delivered placental samples subset
+#selects cesarean delivered samples in ASV count table and removes ASVs no longer present in samples
+Liu_ASV_CS <- Liu_ASV_P %>% select_if(Liu_META_P$Delivery == "Cesarean delivered"); Liu_ASV_CS <- Liu_ASV_CS %>% filter(rowSums(.) > 0)
+#filters out vaginally delivered placental samples
+Liu_META_CS <- Liu_META_P %>% filter(Delivery == "Cesarean delivered")
+#keeps taxonomy current with count table.
+Liu_TAX_CS <- Liu_TAX_P %>% filter(rownames(.) %in% rownames(Liu_ASV_CS))
+#needs species column
+Liu_TAX_CS$Species <- as.character(NA)
+#stores top five ranked ASVs by mean relative abundance in cesarean delivered placental samples
+Top5_Liu <- top_ASVs_above_cutoff(ASV = Liu_ASV_CS, TAX = Liu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Liu")
+```
+
+### Liu et al. agglomeration {#LiuAgglomeration}
+
+There were no shared top ten ranked ASVs between placental samples and vaginal swab samples. However, several genus classifications were shared and therefore the data were agglomerated at the genus level.
+
+```{r Liu_Agglomeration}
+
+#agglomerates data at the genus level
+Liu_rare_ASVPV_agg_Genus <- agglomerate(df = Liu_rare_ASV, df_tax = Liu_rare_TAX, agg_class = "Genus")
+
+#returns top ten ranked genera after agglomeration in placental samples and vaginal swabs
+Liu_agg_top10P <- rowSums(Liu_rare_ASVPV_agg_Genus %>% select_if(Liu_rare_META$Type == "Placenta")) %>% sort(., decreasing = TRUE) %>% head(., 10); Liu_agg_top10V <- rowSums(Liu_rare_ASVPV_agg_Genus %>% select_if(Liu_rare_META$Type == "Vaginal Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared genera between the two sample types
+Liu_agg_top10shared <- Liu_agg_top10P[names(Liu_agg_top10P) %in% names(Liu_agg_top10V)]
+```
+
+### Liu et al. PCoA {#LiuPCoA}
+
+Code for Figure 4F
+
+```{r Liu_PCoA}
+
+#Fig 4F Liu Placental Samples/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "blue"))
+#plots PCoA of placental samples contrasted with vaginal swabs
+Liu_Beta_PV_agg <- beta_div(df = Liu_rare_ASVPV_agg_Genus, df_meta = Liu_rare_META, type = "Type", size = 2, study = "Liu", taxa_on_rows = TRUE, all_O = TRUE, Legend_Yspace = .5, inset = .2)
+#characterizes ordination space with agglomerated genus level classifications
+WA_labels(Liu_Beta_PV_agg, ASV_table = Liu_rare_ASVPV_agg_Genus, TAX_table = data.frame(Genus = rownames(Liu_rare_ASVPV_agg_Genus), row.names = rownames(Liu_rare_ASVPV_agg_Genus), stringsAsFactors = FALSE), ASV_with_Genus = FALSE, color = "grey", Greater_than_1per = FALSE, invert_x = FALSE, invert_y = FALSE, ASVs_to_plot = names(Liu_agg_top10shared), Tax_col = "Genus")
+```
+
+## Olomu et al. analysis {#OlomuAnalysis}
+
+Data was already filtered and cleaned in V4 subset section.
+
+### Olomu et al. subset pre-DECONTAM {#OlomuPreDSubsets}
+
+```{r Olomu_pre-DECONTAM_Subset}
+#removes ASV column in taxonomy
+Olomu_TAX <- Olomu_TAX[,-1]
+
+#subsets metadata to placental samples and technical controls.
+OlomuD_META_PTC <- Olomu_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+OlomuD_ASV_PTC <- Olomu_ASV %>% select_if(colnames(.) %in% OlomuD_META_PTC$Run); OlomuD_ASV_PTC <- OlomuD_ASV_PTC %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table and removes 
+OlomuD_TAX_PTC <- Olomu_TAX %>% filter(rownames(.) %in% rownames(OlomuD_ASV_PTC))
+```
+
+### Olomu et al. DECONTAM {#OlomuDECONTAM}
+
+```{r Olomu_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+OlomuD_META_PTC$Deco_type <- case_when(OlomuD_META_PTC$Type == "Placenta" ~ "sample", OlomuD_META_PTC$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Olomu_DECO_prep <- decontam_prep(df = cbind(OlomuD_TAX_PTC, OlomuD_ASV_PTC), meta = OlomuD_META_PTC, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Olomu <- decontam_histo_prev_plots(physeq = Olomu_DECO_prep, thresh = 0.25, study_name = "Olomu")
+#removes likely contaminants with a threshold of 0.17
+Olomu_decontaminated <- decontaminate(df = cbind(OlomuD_TAX_PTC, OlomuD_ASV_PTC), physeq = Olomu_DECO_prep, thresh = 0.25)
+#returns taxa considered to be truly in the sample
+Olomu_true_taxa <- Olomu_decontaminated$TrueTaxa
+```
+
+### Olomu et al. normalization {#OlomuNormalization}
+```{r Olomu_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Olomu_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Olomu_ASV, tax_df = Olomu_TAX, taxa_as_rows = TRUE, keep_ASV_nums = TRUE)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Olomu_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Olomu_rare_TAX <- merged_rare[,1:8]; Olomu_rare_META <- Olomu_META %>% filter(Run %in% colnames(Olomu_rare_ASV))
+
+#post-DECONTAM Normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Olomu_true_taxa[,9:ncol(Olomu_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Olomu_true_taxa[,1:8], Olomu_true_taxa[,9:ncol(Olomu_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Olomu et al. post-normalization subsets {#OlomuPostNSubsets}
+```{r Olomu_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+OlomuD_rare_META <- OlomuD_META_PTC %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+OlomuD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; OlomuD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+OlomuD_rare_ASV <- OlomuD_rare_ASV %>% select_if(colnames(.) %in% OlomuD_rare_META$Run); OlomuD_rare_ASV <- OlomuD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+OlomuD_rare_TAX <- OlomuD_rare_TAX %>% filter(rownames(.) %in% rownames(OlomuD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Olomu_DECO <- top_ASVs_above_cutoff(ASV = OlomuD_rare_ASV, TAX = OlomuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
+
+#pre-DECONTAM post-normalization subsets
+#selects placental samples and technical controls and removes samples no longer in the metadata
+Olomu_META_PTC <- Olomu_rare_META %>% filter(Type == "Placenta" | Type == "Technical Control")
+#updates ASV count table and removes ASVs no longer in the dataset
+Olomu_ASV_PTC <- Olomu_rare_ASV %>% select_if(colnames(.) %in% Olomu_META_PTC$Run); Olomu_ASV_PTC <- Olomu_ASV_PTC %>% filter(rowSums(.) > 0)
+#updates ASV count table and removes ASVs no longer in the dataset
+Olomu_TAX_PTC <- Olomu_rare_TAX %>% filter(rownames(.) %in% rownames(Olomu_ASV_PTC))
+
+#subsets ASV count table to placental samples, technical controls, and Vaginal-Rectal swabs and removes ASVs no longer in the datset
+Olomu_ASV_PTCV <- Olomu_rare_ASV %>% select_if(Olomu_rare_META$Type != "Pos_Control"); Olomu_ASV_PTCV <- Olomu_ASV_PTCV %>% filter(rowSums(.) > 0)
+#filters metadata to placental samples and updates taxonomy to match ASV count table
+Olomu_META_PTCV <- Olomu_rare_META %>% filter(Run %in% colnames(Olomu_ASV_PTCV)); Olomu_TAX_PTCV <- Olomu_rare_TAX %>% filter(rownames(.) %in% rownames(Olomu_ASV_PTCV))
+
+#Only Placental Subset
+#filters ASV count table to only placental samples and removes ASVs no longer in the datset
+Olomu_ASV_P <- Olomu_rare_ASV %>% select_if(Olomu_rare_META$Type == "Placenta"); Olomu_ASV_P <- Olomu_ASV_P %>% filter(rowSums(.) > 0)
+#filters metadata to placental samples and updates taxonomy to match ASV count table
+Olomu_META_P <- Olomu_rare_META %>% filter(Type == "Placenta"); Olomu_TAX_P <- Olomu_rare_TAX %>% filter(rownames(.) %in% rownames(Olomu_ASV_P))
+Top5_Olomu <- top_ASVs_above_cutoff(ASV = Olomu_ASV_P, TAX = Olomu_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
+```
+
+### Olomu et al. PCoAs {#OlomuPCoAs}
+
+Code for Figures 3D and 4D
+
+```{r Olomu_PCoAs}
+
+#Figure 3D Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Olomu_Beta_plot_PTCWA <- beta_div(df = Olomu_ASV_PTC, df_meta = Olomu_META_PTC, type = "Type", study = "Olomu", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Olomu_topASVs <- rowSums(Olomu_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Olomu_Beta_plot_PTCWA, ASV_table = Olomu_ASV_PTC, TAX_table = Olomu_TAX_PTC, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Olomu_topASVs))
+
+#Fig 4D Leiby Placental Samples/Technical Controls/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black", "blue"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Olomu_Beta_plot_PTCVWA <- beta_div(df = Olomu_ASV_PTCV, df_meta = Olomu_META_PTCV, type = "Type", study = "Olomu", all_O = TRUE, taxa_on_rows = TRUE, size = 2, Legend_Yspace = .5)
+#returns top ten ranked ASVs in placental samples and technical controls
+Olomu_top10ASV_PTC <- rowSums(Olomu_ASV_PTC) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns top ten ranked ASVs in vaginal swab samples 
+Olomu_top10ASV_V <- rowSums(Olomu_ASV_PTCV %>% select_if(Olomu_META_PTCV$Type == "VR Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared ASVs between the sample types
+Olomu_top10shared <- Olomu_top10ASV_PTC[names(Olomu_top10ASV_PTC) %in% names(Olomu_top10ASV_V)]
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Olomu_Beta_plot_PTCVWA, ASV_table = Olomu_ASV_PTCV, TAX_table = Olomu_TAX_PTCV, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Olomu_top10shared))
+```
+
+## Parnell et al. analysis {#ParnellAnalysis}
+
+### Parnell et al. data cleaning {#ParnellCleaning}
+
+```{r Parnell_Data_Cleaning}
+
+#Loads both sequence and metadata
+Parnell_merged <- read.csv(file = "Parnell_merged.csv", stringsAsFactors = FALSE); Parnell_meta <- read.csv(file = "Parnell_SraRunTable.csv", stringsAsFactors = FALSE)
+#subsets metadata to select columns
+Parnell_meta_select <- Parnell_meta %>% select_if(colnames(.) %in% c("Run", "AGE", "Sample.Name", "tissue", "maternal_race", "isolate"))
+colnames(Parnell_meta_select)[6] <- "Level"
+#recodes Type column of metadata
+Parnell_meta_select$Type <- case_when(
+    Parnell_meta_select$Level != NA ~ "Placenta",
+    str_detect(Parnell_meta_select$Sample.Name, pattern = "\\bU") ~ "Positive Control",
+    str_detect(Parnell_meta_select$Sample.Name, pattern = "\\b[WN]") ~ "Technical Control",
+    str_detect(Parnell_meta_select$Sample.Name, pattern = "\\bBlank") ~ "Technical Control",
+    str_detect(Parnell_meta_select$Level, pattern = "\\b(Basal|Placental|Fetal)") ~ "Placenta"
+)
+#recodes `Level` column of metadata
+Parnell_meta_select$Level[is.na(Parnell_meta_select$Level) & Parnell_meta_select$Type != "Positive Control"] <- "Technical Control"
+#cleans sequence data and renames rows with numbered ASVs
+Parnell_merged_clean <- dadaset_clean(df = Parnell_merged, read_thresh = 100); rownames(Parnell_merged_clean) <- paste0("ASV", 1:nrow(Parnell_merged_clean))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Parnell_ASV <- Parnell_merged_clean[,9:ncol(Parnell_merged_clean)]; Parnell_TAX <- Parnell_merged_clean[,1:8]
+#filters samples in metadata to those in ASV count table
+Parnell_META <- Parnell_meta_select %>% filter(Run %in% colnames(Parnell_merged_clean))
+
+#Reclassifies ASV6 which shares 100% identity to a Mesorhizobium type strain 
+Parnell_TAX$Genus[6] <- "Mesorhizobium*"
+#Reclassifies ASV47 which shares 99.40% identity to a Pseudomonas type strain
+Parnell_TAX$Genus[47] <- "Pseudomonas*"
+```
+
+### Parnell et al. subset pre-DECONTAM {#ParnellPreDSubsets}
+
+```{r Parnell_pre-DECONTAM_Subset}
+
+#subsets metadata to placental samples and technical controls.
+ParnellD_META_PTC <- Parnell_META %>% filter(Type != "Positive Control")
+#subsets ASV count table to samples remaining in metadata and removes ASVs which no longer have reads remaining in the dataset
+ParnellD_ASV_PTC <- Parnell_ASV %>% select_if(colnames(.) %in% ParnellD_META_PTC$Run); ParnellD_ASV_PTC  <- ParnellD_ASV_PTC %>% filter(rowSums(.) > 0)
+#filters taxonomy to match remaining ASVs in ASV count table
+ParnellD_TAX_PTC <- Parnell_TAX %>% filter(rownames(.) %in% rownames(ParnellD_ASV_PTC))
+```
+
+### Parnell et al. DECONTAM {#ParnellDECONTAM}
+
+```{r Parnell_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+ParnellD_META_PTC$Deco_type <- case_when(ParnellD_META_PTC$Type == "Placenta" ~ "sample", ParnellD_META_PTC$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Parnell_DECO_prep <- decontam_prep(df = cbind(ParnellD_TAX_PTC, ParnellD_ASV_PTC), meta = ParnellD_META_PTC, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Parnell <- decontam_histo_prev_plots(physeq = Parnell_DECO_prep, thresh = 0.35, study_name = "Parnell")
+#removes likely contaminants with a threshold of 0.35
+Parnell_decontaminated <- decontaminate(df = cbind(ParnellD_TAX_PTC, ParnellD_ASV_PTC), physeq = Parnell_DECO_prep, thresh = 0.35)
+#returns taxa considered to be truly in the sample
+Parnell_true_taxa <- Parnell_decontaminated$TrueTaxa
+```
+
+### Parnell et al. normalization {#ParnellNormalization}
+```{r Parnell_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(ParnellD_ASV_PTC))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = ParnellD_ASV_PTC, tax_df = ParnellD_TAX_PTC, taxa_as_rows = TRUE, keep_ASV_nums = TRUE)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Parnell_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Parnell_rare_TAX <- merged_rare[,1:8]; Parnell_rare_META <- Parnell_META %>% filter(Run %in% colnames(Parnell_rare_ASV))
+
+#DECONTAM Normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Parnell_true_taxa[,9:ncol(Parnell_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Parnell_true_taxa[,1:8], Parnell_true_taxa[,9:ncol(Parnell_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Parnell et al. post-normalization subsets {#ParnellPostNSubsets}
+
+```{r Parnell_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+ParnellD_rare_META <- Parnell_rare_META %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+ParnellD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; ParnellD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+ParnellD_rare_ASV <- ParnellD_rare_ASV %>% select_if(colnames(.) %in% ParnellD_rare_META$Run); ParnellD_rare_ASV <- ParnellD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+ParnellD_rare_TAX <- ParnellD_rare_TAX %>% filter(rownames(.) %in% rownames(ParnellD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Parnell_DECO <- top_ASVs_above_cutoff(ASV = ParnellD_rare_ASV, TAX = ParnellD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Parnell")
+
+#Only Placental Subset
+#filters ASV count table to only placental samples and removes ASVs no longer in the dataset
+Parnell_ASV_P <- Parnell_rare_ASV %>% select_if(Parnell_rare_META$Type == "Placenta"); Parnell_ASV_P <- Parnell_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Parnell_META_P <- Parnell_rare_META %>% filter(Type == "Placenta"); Parnell_TAX_P <- Parnell_rare_TAX %>% filter(rownames(.) %in% rownames(Parnell_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Parnell <- top_ASVs_above_cutoff(ASV = Parnell_ASV_P, TAX = Parnell_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Parnell")
+```
+
+### Parnell et al. PCoA {#ParnellPCoAs}
+
+```{r Parnell_PCoA}
+
+#Figure 3E Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Parnell_Beta_plot_PTCWA <- beta_div(df = Parnell_rare_ASV, df_meta = Parnell_rare_META, type = "Type", study = "Parnell", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Parnell_topASVs <- rowSums(Parnell_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Parnell_Beta_plot_PTCWA, ASV_table = Parnell_rare_ASV, TAX_table = Parnell_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Parnell_topASVs))
+```
+
+## Seferovic et al. analysis {#SeferovicAnalysis}
+
+Data was already filtered and cleaned in V4 subset section.
+
+### Seferovic et al. normalization {#SeferovicNormalization}
+```{r Seferovic_Normalization}
+
+#removes ASV and species columns in taxonomy
+Seferovic_TAX <- Seferovic_TAX[,2:8]
+
+#visualization of sampling depth variance across dataset
+table(colSums(Seferovic_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Seferovic_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Seferovic_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Seferovic_rare_ASV <- merged_rare[,8:ncol(merged_rare)]; Seferovic_rare_TAX <- merged_rare[,1:7]; Seferovic_rare_META <- Seferovic_META %>% filter(Run %in% colnames(Seferovic_rare_ASV))
+```
+
+### Seferovic et al. post-normalization subset {#SeferovicPostNSubsets} 
+
+```{r Seferovic_Subset}
+
+#filters ASV count table to only placental samples and removes ASVs no longer in the datset
+Seferovic_ASV_P <- Seferovic_rare_ASV %>% select_if(Seferovic_rare_META$Type == "Placenta"); Seferovic_ASV_P <- Seferovic_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Seferovic_META_P <- Seferovic_rare_META %>% filter(Type == "Placenta"); Seferovic_TAX_P <- Seferovic_rare_TAX %>% filter(rownames(.) %in% rownames(Seferovic_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in placental samples
+Top5_Seferovic <- top_ASVs_above_cutoff(ASV = Seferovic_ASV_P, TAX = cbind(Seferovic_TAX_P, data.frame(Species = NA, stringsAsFactors = FALSE)), cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Seferovic")
+```
+
+### Seferovic et al. PCoA {#SeferovicPCoA}
+```{r Seferovic_PCoA_PTC_WA}
+
+#Figure 3F Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls and vaginal swabs
+Seferovic_Beta_plot_PTCWA <- beta_div(df = Seferovic_rare_ASV, df_meta = Seferovic_rare_META, type = "Type", study = "Seferovic", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Seferovic_topASVs <- rowSums(Seferovic_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Seferovic_Beta_plot_PTCWA, ASV_table = Seferovic_rare_ASV, TAX_table = Seferovic_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Seferovic_topASVs))
+```
+
+## Sterpu et al. analysis {#SterpuAnalysis}
+
+Technical control sequence data was obtained from authors.
+
+### Sterpu et al. data cleaning {#SterpuCleaning}
+```{r Sterpu_Data_Cleaning}
+
+#Loads both sequence and metadata
+Sterpu_merged <- read.csv(file = "Sterpu_merged.csv", stringsAsFactors = FALSE); Sterpu_meta <- read.csv(file = "Sterpu_SraRunTable.csv", stringsAsFactors = FALSE)
+#subsets metadata to select columns
+Sterpu_meta_select <- Sterpu_meta %>% select_if(colnames(.) %in% c("Run", "drug_usage", "environment_.biome.", "environment_.feature.", "host_disease_status", "host_subject_id", "Sample.Name"))
+#renames metadata columns
+colnames(Sterpu_meta_select) <- c("Run", "Drug Usage", "Type", "Level", "Disease Status", "Subject_ID", "Sample")
+#capitalizes entries in `Type` column
+Sterpu_meta_select$Type <- str_to_title(Sterpu_meta_select$Type)
+#strips "Subject" from subject ID's and converts to numeric
+Sterpu_meta_select$Subject_ID <- sub(pattern = "(Subject )(\\d+)(.+)?( placenta [12])?", replacement = "\\2", x = Sterpu_meta_select$Subject_ID); Sterpu_meta_select$Subject_ID <- as.numeric(Sterpu_meta_select$Subject_ID)
+#subjects with subject ID 1-50 are C-sections and 51-76 are vaginally delivered.
+Sterpu_meta_select$Delivery <- case_when(
+    Sterpu_meta_select$Subject_ID < 51 ~ "Cesarean",
+    Sterpu_meta_select$Subject_ID > 50 ~ "Vaginal"
+)
+#adds metadata for technical control samples which were not in the public database
+control_meta <- as.data.frame(cbind(colnames(Sterpu_merged)[(ncol(Sterpu_merged)-5):ncol(Sterpu_merged)],matrix(nrow = 6, ncol = 1), rep("Technical Control", 6), rep("Technical Control", 6), matrix(nrow = 6, ncol = 4)))
+#adds column names from metadata and adds techncial control metadata to main metadata object
+colnames(control_meta) <- colnames(Sterpu_meta_select); Sterpu_meta_select <- rbind(Sterpu_meta_select, control_meta)
+
+#cleans sequence data and renames rows with numbered ASVs
+Sterpu_merged_clean <- dadaset_clean(df = Sterpu_merged, read_thresh = 100); rownames(Sterpu_merged_clean) <- paste0("ASV", 1:nrow(Sterpu_merged_clean))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Sterpu_ASV <- Sterpu_merged_clean[,9:ncol(Sterpu_merged_clean)]; Sterpu_TAX <- Sterpu_merged_clean[,1:8]
+#filters samples in metadata to those in ASV count table
+Sterpu_META <- Sterpu_meta_select %>% filter(Run %in% colnames(Sterpu_merged_clean))
+```
+
+### Sterpu et al. DECONTAM {#SterpuDECONTAM}
+
+```{r Sterpu_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+Sterpu_META$Deco_type <- c(rep("sample", 135), rep("control", 6))
+#prepares data for DECONTAM
+Sterpu_DECO_prep <- decontam_prep(df = Sterpu_merged_clean, meta = Sterpu_META, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Sterpu <- decontam_histo_prev_plots(physeq = Sterpu_DECO_prep, thresh = 0.15, study_name = "Sterpu")
+#removes likely contaminants with a threshold of 0.15
+Sterpu_decontaminated <- decontaminate(df = Sterpu_merged_clean, physeq = Sterpu_DECO_prep, thresh = 0.15)
+#returns taxa considered to be truly in the sample
+Sterpu_true_taxa <- Sterpu_decontaminated$TrueTaxa
+```
+
+### Sterpu et al. normalization {#SterpuNormalization}
+
+```{r Sterpu_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Sterpu_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Sterpu_TAX, Sterpu_ASV))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Sterpu_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Sterpu_rare_TAX <- merged_rare[,1:8]; Sterpu_rare_META <- Sterpu_META %>% filter(Run %in% colnames(Sterpu_rare_ASV))
+
+#post-DECONTAM Normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Sterpu_true_taxa[,9:ncol(Sterpu_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Sterpu_true_taxa[,1:8], Sterpu_true_taxa[,9:ncol(Sterpu_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Sterpu et al. post-normalization subsets {#SterpuPostNSubsets}
+
+```{r Sterpu_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+SterpuD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; SterpuD_rare_TAX <- merged_rare[,1:8]
+#subsets metadata to placental samples
+SterpuD_rare_META <- Sterpu_META %>% filter(Type == "Placenta")
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+SterpuD_rare_ASV <- SterpuD_rare_ASV %>% select_if(colnames(.) %in% SterpuD_rare_META$Run); SterpuD_rare_ASV <- SterpuD_rare_ASV %>% filter(rowSums(.) > 0)
+#ensures that metadata are current with ASV count table
+SterpuD_rare_META <- SterpuD_rare_META %>% filter(Run %in% colnames(SterpuD_rare_ASV))
+
+#keeps taxonomy current with count table.
+SterpuD_rare_TAX <- SterpuD_rare_TAX %>% filter(rownames(.) %in% rownames(SterpuD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Sterpu_DECO <- top_ASVs_above_cutoff(ASV = SterpuD_rare_ASV, TAX = SterpuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+
+#filters ASV count table to only placental samples and removes ASVs no longer in the dataset
+Sterpu_ASV_P <- Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Type == "Placenta"); Sterpu_ASV_P <- Sterpu_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Sterpu_META_P <- Sterpu_rare_META %>% filter(Type == "Placenta"); Sterpu_TAX_P <- Sterpu_rare_TAX %>% filter(rownames(.) %in% rownames(Sterpu_ASV_P))
+
+#strictly cesarean
+#filters ASV count table to only placental samples and removes ASVs no longer in the dataset
+Sterpu_ASV_CS <- Sterpu_ASV_P %>% select_if(Sterpu_META_P$Delivery == "Cesarean"); Sterpu_ASV_CS <- Sterpu_ASV_CS %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Sterpu_META_CS <- Sterpu_META_P %>% filter(Delivery == "Cesarean"); Sterpu_TAX_CS <- Sterpu_TAX_P %>% filter(rownames(.) %in% rownames(Sterpu_ASV_CS))
+#stores top five ranked ASVs by mean relative abundance in placental samples from cesarean term deliveries
+Top5_Sterpu <- top_ASVs_above_cutoff(ASV = Sterpu_ASV_CS, TAX = Sterpu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+```
+
+### Sterpu et al. PCoA {#SterpuPCoA}
+```{r Sterpu_PCoA_PTC_WA}
+
+#Figure 3H Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd = FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Sterpu_Beta_plot_PTCWA <- beta_div(df = Sterpu_rare_ASV, df_meta = Sterpu_rare_META, type = "Type", study = "Sterpu", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Sterpu_topASVs <- rowSums(Sterpu_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Sterpu_Beta_plot_PTCWA, ASV_table = Sterpu_rare_ASV, TAX_table = Sterpu_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Sterpu_topASVs))
+```
+
+## Tang et al. analysis {#TangAnalysis}
+
+### Tang et al. data cleaning {#TangCleaning}
+
+```{r Tang_Data_Cleaning}
+
+#Loads both sequence and metadata
+Tang_merged <- read.csv("Tang_merged.csv", stringsAsFactors = FALSE); Tang_meta <- read.csv("Tang_SraRunTable.csv", stringsAsFactors = FALSE)
+#subsets metadata, renames columns and capitalizes `Type` Column
+Tang_meta_select <- Tang_meta %>% select_if(colnames(.) %in% c("Run", "isolate", "Sample.Name", "Tissue")); colnames(Tang_meta_select) <- c("Run", "Isolate", "Sample", "Type"); Tang_meta_select$Type <- str_to_title(Tang_meta_select$Type)
+#cleans sequence data and renames rows with numbered ASVs
+Tang_merged_clean <- dadaset_clean(Tang_merged, read_thresh = 100); rownames(Tang_merged_clean) <- paste0("ASV", 1:nrow(Tang_merged_clean))
+#splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. 
+Tang_ASV <- Tang_merged_clean[, 9:ncol(Tang_merged_clean)]; Tang_TAX <- Tang_merged_clean[, 1:8]
+#subsets metadata to samples in ASV count table
+Tang_META <- Tang_meta_select %>% filter(Run %in% colnames(Tang_ASV))
+```
+
+### Tang et al. normalization {#TangNormalization}
+
+```{r Tang_Normalization}
+
+#visualization of sampling depth variance across dataset
+table(colSums(Tang_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Tang_ASV, tax_df = Tang_TAX, keep_ASV_nums = TRUE)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Tang_rare_TAX <- merged_rare[,1:8]; Tang_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Tang_rare_META <- Tang_META %>% filter(Run %in% colnames(Tang_rare_ASV))
+```
+
+### Tang et al. post-normalization subset {#TangPostNSubsets}
+
+```{r Tang_Subset}
+
+#Only Placental Subset
+#selects only placental samples from ASV count table and removes ASVs no longer present in samples
+Tang_ASV_P <- Tang_rare_ASV %>% select_if(Tang_rare_META$Type == "Placenta"); Tang_ASV_P <- Tang_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Tang_META_P <- Tang_rare_META %>% filter(Type == "Placenta"); Tang_TAX_P <- Tang_rare_TAX %>% filter(rownames(.) %in% rownames(Tang_ASV_P))
+
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+#No ASVs were greater than 1% among placental samples in this dataset. The highest relative abundance was 0.16%. Therefore, ASVs from the Tang dataset were excluded from tables 2 and S1.
+top_ASVs_above_cutoff(ASV = Tang_ASV_P, TAX = Tang_TAX_P, cutoff = 0.001, top = 5, ASVs_on_Rows = TRUE, study = "Tang", META = Tang_META_P)
+```
+
+## Theis et al. analysis {#TheisAnalysis}
+
+### Theis et al. additional data cleaning {#TheisAdtnlCleaning}
+
+Data was already filtered and cleaned in V4 subset section.
+
+```{r Theis_Data_Cleaning}
+#removes ASV column
+Theis_TAX <- Theis_TAX[,-1]
+
+#adds `Level` metadata column
+Theis_META$Level <- case_when(
+    str_detect(Theis_META$Sample, pattern = "C$") ~ "Amnion-Chorion",
+    str_detect(Theis_META$Sample, pattern = "V$") ~ "Villous Tree",
+    str_detect(Theis_META$Type, "Technical Control") ~ "Technical Control"
+)
+
+#ASV98 Alcaligenaceae shares 99.6% identity to Achromobacter xylosoxidans strain FDAARGOS but also Bordetella hinzii strain NCTC13199. Therefore, family level classification will remain
+```
+
+### Theis et al. DECONTAM {#TheisDECONTAM}
+
+```{r Theis_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+Theis_META$Deco_type <- case_when(Theis_META$Type == "Placenta" ~ "sample", Theis_META$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Theis_DECO_prep <- decontam_prep(df = cbind(Theis_TAX, Theis_ASV), meta = Theis_META, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Theis <- decontam_histo_prev_plots(physeq = Theis_DECO_prep, thresh = 0.1, study_name = "Theis")
+#removes likely contaminants with a threshold of 0.1
+Theis_decontaminated <- decontaminate(df = cbind(Theis_TAX, Theis_ASV), physeq = Theis_DECO_prep, thresh = 0.1)
+#returns taxa considered to be truly in the sample
+Theis_true_taxa <- Theis_decontaminated$TrueTaxa
+```
+
+### Theis et al. normalization {#TheisNormalization}
+
+```{r Theis_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Theis_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Theis_TAX, Theis_ASV))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Theis_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Theis_rare_TAX <- merged_rare[,1:8]; Theis_rare_META <- Theis_META %>% filter(Run %in% colnames(Theis_rare_ASV))
+
+#post-DECONTAM normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Theis_true_taxa[,9:ncol(Theis_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Theis_true_taxa[,1:8], Theis_true_taxa[,9:ncol(Theis_true_taxa)]))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Theis et al. post-normalization subsets {#TheisPostNSubsets}
+
+```{r Theis_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+TheisD_rare_META <- Theis_rare_META %>% filter(Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+TheisD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; TheisD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+TheisD_rare_ASV <- TheisD_rare_ASV %>% select_if(colnames(.) %in% TheisD_rare_META$Run); TheisD_rare_ASV <- TheisD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+TheisD_rare_TAX <- TheisD_rare_TAX %>% filter(rownames(.) %in% rownames(TheisD_rare_ASV))
+#ensures metadata current with ASV count table
+TheisD_rare_META <- TheisD_rare_META %>% filter(Run %in% colnames(TheisD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Theis_DECO <- top_ASVs_above_cutoff(ASV = TheisD_rare_ASV, TAX = TheisD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
+
+#pre-DECONTAM post-normalization subsets
+#selects only placental samples and removes ASVs no longer in the dataset
+Theis_ASV_P <- Theis_rare_ASV %>% select_if(Theis_rare_META$Type == "Placenta"); Theis_ASV_P <- Theis_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Theis_META_P <- Theis_rare_META %>% filter(Type == "Placenta"); Theis_TAX_P <- Theis_rare_TAX %>% filter(rownames(.) %in% rownames(Theis_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Theis <- top_ASVs_above_cutoff(ASV = Theis_ASV_P, TAX = Theis_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
+```
+
+### Theis et al. PCoA {#TheisPCoAs}
+
+Code for Figure 3G
+
+```{r Theis_PCoA}
+
+#Figure 3G Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Theis_Beta_plot_PTCWA <- beta_div(df = Theis_rare_ASV, df_meta = Theis_rare_META, type = "Type", study = "Theis", all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Theis_topASVs <- rowSums(Theis_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Theis_Beta_plot_PTCWA, ASV_table = Theis_rare_ASV, TAX_table = Theis_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Theis_topASVs))
+```
+
+## Winters et al. analysis {#WintersAnalysis}
+
+### Winters et al. additional data cleaning {#WintersAdtnlCleaning}
+
+Data was already filtered and cleaned in V4 subset section.
+
+```{r Winters_Data_Cleaning}
+
+#Reclassifies ASV2740 Enterobacterales (Winters) which shares 100% identity to type strain Serratia marcescens ATCC 13880. The sequence also shares 100% identity to type strain Bacillus sonorensis NBRC 101234, but this type strain only shares 80% identity with other Bacillus sonorensis type strains and is likely misclassified.
+Winters_TAX$Genus[2740] <- "Serratia*"
+
+#removes ASV column
+Winters_TAX <- Winters_TAX[,-1]
+
+#adds labor metadata
+#filters metadata to samples in `Winters_META`
+Winters_meta <- Winters_meta %>% filter(Run %in% Winters_META$Run)
+#orders metadata by `Run` column in `Winters_META`
+Winters_meta <- Winters_meta[match(x = Winters_META$Run, table = Winters_meta$Run),]
+Winters_META <- cbind(Winters_META, data.frame(Labor = Winters_meta$Labor))
+
+#adds `Level` metadata
+Winters_META$Level <- Winters_meta$Level
+#recodes `Level` metadata
+Winters_META$Level <- Winters_META$Level %>% recode(., "Hood" = "Technical Control", "BLK" = "Technical Control")
+```
+
+### Winters et al. DECONTAM {#WintersDECONTAM}
+
+Removes likely contaminants.
+
+```{r Winters_DECONTAM}
+
+#DECONTAM requires a column indicating which samples are to be considered samples and which are controls
+Winters_META$Deco_type <- case_when(Winters_META$Type == "Placenta" ~ "sample", Winters_META$Type == "Technical Control" ~ "control")
+#prepares data for DECONTAM
+Winters_DECO_prep <- decontam_prep(df = cbind(Winters_TAX, Winters_ASV), meta = Winters_META, type = "Deco_type", sample_col = "Run")
+#generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
+DECO_plots_Winters <- decontam_histo_prev_plots(physeq = Winters_DECO_prep, thresh = 0.19, study_name = "Winters")
+#removes likely contaminants with a threshold of 0.19
+Winters_decontaminated <- decontaminate(df = cbind(Winters_TAX, Winters_ASV), physeq = Winters_DECO_prep, thresh = 0.19)
+#returns taxa considered to be truly in the sample
+Winters_true_taxa <- Winters_decontaminated$TrueTaxa
+```
+
+### Winters et al. normalization {#WintersNormalization}
+
+```{r Winters_Normalization}
+
+#pre-DECONTAM dataset normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Winters_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(merged_df = Winters_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Winters_TAX)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than the minimum number of sequences at this point are removed.
+rarefied <- rarefy_even_depth(phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Winters_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Winters_rare_META <- Winters_META %>% filter(Run %in% colnames(Winters_rare_ASV)); Winters_rare_TAX <- merged_rare[,1:8]
+
+#post-DECONTAM normalization
+#visualization of sampling depth variance across dataset
+table(colSums(Winters_true_taxa[,9:ncol(Winters_true_taxa)]))
+#converts dataset to phyloseq object
+phy <- phyloseqize(Winters_true_taxa)
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+```
+
+### Winters et al. post-normalization subsets {#WintersPostNSubsets}
+
+```{r Winters_post-Normalization_Subsets}
+
+#post-DECONTAM dataset after normalization does not need technical controls
+WintersD_rare_META <- Winters_META %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+#splits dataframe into `ASV` count table, `TAX` taxonomy
+WintersD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; WintersD_rare_TAX <- merged_rare[,1:8]
+#removes technical controls from `ASV` count table and removes ASVs no longer present in samples
+WintersD_rare_ASV <- WintersD_rare_ASV %>% select_if(colnames(.) %in% WintersD_rare_META$Run); WintersD_rare_ASV <- WintersD_rare_ASV %>% filter(rowSums(.) > 0)
+#keeps taxonomy current with count table.
+WintersD_rare_TAX <- WintersD_rare_TAX %>% filter(rownames(.) %in% rownames(WintersD_rare_ASV))
+#stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
+Top5_Winters_DECO <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV, TAX = WintersD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+
+#pre-DECONTAM post-normalization subsets
+#selects only term cesarean placental samples and removes ASVs no longer in the dataset
+Winters_ASV_P <- Winters_rare_ASV %>% select_if(Winters_rare_META$Type == "Placenta" & Winters_rare_META$GA == "Term" & Winters_rare_META$Delivery == "Cesarean"); Winters_ASV_P <- Winters_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Winters_META_P <- Winters_rare_META %>% filter(Type == "Placenta" & GA == "Term" & Delivery == "Cesarean"); Winters_TAX_P <- Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Winters_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Winters_P <- top_ASVs_above_cutoff(ASV = Winters_ASV_P, TAX = Winters_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+
+
+#filters metadata to placentas from unlabored term cesarean deliveries
+Winters_META_CST_UL <- Winters_META_P %>% filter(Labor == "NIL")
+#selects only placental samples from term cesarean unlabored deliveries and removes ASVs no longer in the dataset
+Winters_ASV_CST_UL <- Winters_ASV_P %>% select_if(colnames(.) %in% Winters_META_CST_UL$Run); Winters_ASV_CST_UL <- Winters_ASV_CST_UL %>% filter(rowSums(.) >0)
+#updates metadata and taxonomy to match ASV count table
+Winters_TAX_CST_UL <- Winters_TAX_P %>% filter(rownames(.) %in% rownames(Winters_ASV_CST_UL))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
+Top5_Winters_CSTUL <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL, TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+
+#selects only placental samples from unlabored term cesarean deliveries as well as technical controls and removes ASVs no longer in the dataset
+Winters_ASV_PTC <- Winters_rare_ASV %>% select_if(Winters_rare_META$Type == "Technical Control" | Winters_rare_META$Type == "Placenta" & Winters_rare_META$GA == "Term" & Winters_rare_META$Delivery == "Cesarean" & Winters_rare_META$Labor == "NIL"); Winters_ASV_PTC <- Winters_ASV_PTC %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Winters_META_PTC <- Winters_rare_META %>% filter(Type == "Technical Control" | Type == "Placenta" & GA == "Term" & Delivery == "Cesarean" & Labor == "NIL"); Winters_TAX_PTC <- Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Winters_ASV_PTC))
+
+```
+
+### Winters et al. PCoA {#WintersPCoA}
+
+Code for Figure 3J
+
+```{r Winters_PCoA}
+
+#Figure 3J Placental Samples/Technical Controls
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "black"))
+#plots PCoA of placental samples contrasted with technical controls
+Winters_Beta_plot_PTCWA <- beta_div(df = Winters_rare_ASV, df_meta = Winters_rare_META, type = "Type", study = "Winters", inset = 0, all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+#returns top ten ranked ASVs by mean relative abundance in the dataset
+Winters_topASVs <- rowSums(Winters_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Winters_Beta_plot_PTCWA, ASV_table = Winters_rare_ASV, TAX_table = Winters_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Winters_topASVs))
+```
+
+
+## Younge et al. analysis {#YoungeAnalysis}
+
+### Younge et al. additional data cleaning {#YoungeAdtnlCleaning}
+
+Data was already filtered and cleaned in V4 subset section.
+
+```{r Younge_Data_Cleaning}
+
+#removes ASV column
+Younge_TAX <- Younge_TAX[,-1]
+```
+
+### Younge et al. normalization {#YoungeNormalization}
+```{r Younge_Normalization}
+
+#visualization of sampling depth variance across dataset
+table(colSums(Younge_ASV))
+#converts dataset to phyloseq object
+phy <- phyloseqize(cbind(Younge_TAX, Younge_ASV))
+#normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than the minimum numher of sequences at this point are removed.
+rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
+#converts phyloseq object back to merged data frame
+merged_rare <- dephy(rarefied)
+#splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
+Younge_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Younge_rare_TAX <- merged_rare[,1:8]; Younge_rare_META <- Younge_META %>% filter(Run %in% colnames(Younge_rare_ASV))
+```
+
+### Younge et al. post-normalization subset {#YoungePostNSubset}
+
+```{r Younge_post-Normalization_Subset}
+
+#selects placental samples and removes ASVs no longer in the dataset
+Younge_ASV_P <- Younge_rare_ASV %>% select_if(Younge_rare_META$Type == "Placenta"); Younge_ASV_P <- Younge_ASV_P %>% filter(rowSums(.) > 0)
+#updates metadata and taxonomy to match ASV count table
+Younge_META_P <- Younge_rare_META %>% filter(Type == "Placenta"); Younge_TAX_P <- Younge_rare_TAX %>% filter(rownames(.) %in% rownames(Younge_ASV_P))
+#stores top five ranked ASVs by mean relative abundance in pre-DECONTAM placental samples dataset
+Top5_Younge <- top_ASVs_above_cutoff(ASV = Younge_ASV_P, TAX = Younge_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Younge")
+```
+
+### Younge et al. PCoA {#YoungePCoA}
+
+
+```{r Younge_PCoA}
+
+#Figure 4D Placental Samples/Technical Controls/Vaginal Swabs
+#allows plotting which extends past plot window
+par(xpd= FALSE)
+#sets palette
+palette(c("red", "blue"))
+#plots PCoA of placental samples contrasted with vaginal swabs
+Younge_Beta_plot_PVWA <- beta_div(df = Younge_rare_ASV, df_meta = Younge_rare_META, type = "Type", study = "Younge", all_O = TRUE, taxa_on_rows = TRUE, size = 2, Legend_Yspace = .5, inset = .2)
+#returns top ten ranked ASVs in placental samples
+Younge_top10ASV_P <- rowSums(Younge_rare_ASV %>% select_if(Younge_rare_META$Type == "Placenta")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns top ten ranked ASVs in vaginal swab samples 
+Younge_top10ASV_V <- rowSums(Younge_rare_ASV %>% select_if(Younge_rare_META$Type == "Vaginal Swab")) %>% sort(., decreasing = TRUE) %>% head(., 10)
+#returns shared ASVs between the sample types
+Younge_top10shared <- Younge_top10ASV_P[names(Younge_top10ASV_P) %in% names(Younge_top10ASV_V)]
+#characterizes ordination space with ASV genus level classifications
+WA_labels(Plot_object = Younge_Beta_plot_PVWA, ASV_table = Younge_rare_ASV, TAX_table = Younge_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Younge_top10shared))
+
+#resets the palette
+palette(pal)
+```
+
+
+***
+
+# Tables {#Tables}
+
+## Border and text definitions {#BandTDefs}
+
+These help define the text and border formatting for the following tables.
+
+```{r Border_Text_Definitions}
+
+#border definitions
+border_thin = fp_border(color="gray", width = 1)
+border_dark_grey <- fp_border(color = "#666666", width = 2)
+
+#text definitions
+text_italic <- fp_text(italic = TRUE)
+text_bold <- fp_text(bold = TRUE)
+text_bold_italic <- fp_text(bold = TRUE, italic = TRUE)
+text_bold_italic_red <- fp_text(bold = TRUE, italic = TRUE, color = "red")
+```
+
+## Table 1 {#Table1}
+
+Overview of placental microbiota studies using 16S rRNA gene sequencing that were included in the critical review and reanalysis.
+
+```{r Table_1}
+
+#initializes table metadata for each study included in the reanalysis
+Table_1 <- data.frame(
+  Study = c("de Goffau Part I", "Lauder", "Leiby", "Tang", "Dinsdale", "Olomu", "Parnell", "Seferovic", "Theis Part I", "Younge", "Winters", "Liu", "Leon", "Gomez-Arango", "Sterpu"), 
+  hyperregion = c(rep("V1-V2", 3), "V3-V4", rep("V4", 7), "V4-V5", "V5-V7", rep("V6-V8", 2)), 
+  Cesarean.Term = c(80, 1, 1, 15, "[19]", 47, 34, 26,29,5, 28, 42, "[136]", 16, 50), 
+  Cesarean.Preterm = c(0, 0,5,0,"[19]",0,0,8,0,5,14,0,"[136]",0,0), 
+  Vaginal.Term = c(0, 5, 19, 0, "[31]", 0, 23, 0,0,0, 21, 36, "[120]", 20, 26), 
+  Vaginal.Preterm = c(0, 0, 15, 0, "[31]", 0, 0, 18, 0, 0, 6, 0, "[120]", 0,0), 
+  Technical_Controls = c(47, 39, 103, 0,8,131,21,2,43,0,12,0,21,0,6), 
+  Delivery = c("X", "X", "X", "X", "X", "X", "X", " ", "X", "X", "X", "X", " ", "X", "X"), 
+  Gestational_Age = c("X", "X", "X", "X", " ", "X", "X", " ", "X", " ", "X", "X", " ", "X", "X"), 
+  Processed_with_DECONTAM = c("X", "X", "X", " ", "X", "X", "X", " ", "X", " ", "X", " ", "X", " ", "X"),
+  stringsAsFactors = FALSE)
+#renames columns
+colnames(Table_1)[c(1:2,7,9:10)] <- c("Study", "16S rRNA gene hypervariable region", "Technical Controls", "Gestational Age", "Ability to run DECONTAM")
+#reorders studies by amount of metadata included
+Table_1 <- Table_1[c(1:3,6,7,9,11,15,5,4,12,14,10,13,8),]
+
+#formats table as flextable
+ft_1 <- flextable(Table_1)
+
+#generates dataframe for renaming header with key column: `col_keys`
+new_header <- data.frame(
+  col_keys = colnames(Table_1),
+  header_above = c("Study", "16S rRNA gene hypervariable region", "Cesarean", "Cesarean", "Vaginal", "Vaginal", "Technical Controls", rep("Ability to split by", 2), "Ability to run DECONTAM"),
+  header_below = c("Study", "16S rRNA gene hypervariable region", "Term", "Preterm", "Term", "Preterm", "Technical Controls", "Delivery", "Gestational Age", "Ability to run DECONTAM"), 
+  stringsAsFactors = FALSE)
+
+#produces formatted table 1
+Table1_formatted <- set_header_df(ft_1, mapping = new_header, key = "col_keys") %>% 
+                    merge_v(part = "header", j = c(1:2,7,10)) %>% 
+                    merge_h(part = "header", i = 1) %>% 
+                    theme_booktabs(bold_header = TRUE) %>% 
+                    align(align = "center", part = "all") %>% 
+                    footnote(i = c(4, 6, 8, 10, 12, 13), j = 3, value = as_paragraph("Indicates placental samples delivered without labor."), ref_symbols = "a", part = "body") %>% 
+                    hline(border = border_thin) %>% 
+                    merge_h_range(i = c(9, 14), j1 = 3, j2 = 4) %>% 
+                    merge_h_range(i = c(9, 14), j1 = 5, j2 = 6) %>% 
+                    vline(border = border_dark_grey,j = c(2, 4, 6)); Table1_formatted
+```
+
+## Table 2 {#Table2}
+
+Table 2 summarizes the top five ranked ASVs from all studies which could be restricted to placentas from term cesarean deliveries before and after DECONTAM processing.
+
+```{r Table_2}
+
+#initializes table metadata for studies which could be restricted to placentas from term cesarean deliveries
+Table_2 <- data.frame(
+  Study = c("", "Olomu", "Parnell", "Theis", "Winters", "Liu", "Sterpu", "", "Olomu", "Parnell", "Theis", "Winters", "Sterpu"), 
+  Hypervariable_Region = c("", rep("V4", 4), "V4-V5", "V6-V8", "", rep("V4", 4), "V6-V8"), 
+  stringsAsFactors = FALSE)
+
+#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries
+Table_2_ASVs <- rbind(Top5_Olomu, Top5_Parnell, Top5_Theis, Top5_Winters_P, Top5_Liu, Top5_Sterpu)
+#adds rank within each study
+Table_2_ASVs$Rank <- rep(seq(1:(nrow(Table_2_ASVs)/length(unique(Table_2_ASVs$Study)))), length(unique(Table_2_ASVs$Study)))
+#aggregates genus classifications of ASVs
+pretable <- data.frame(ASV1 = Table_2_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_2_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_2_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_2_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_2_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+
+#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries after DECONTAM processing
+Table_2DECO_ASVs <- rbind(Top5_Olomu_DECO, Top5_Parnell_DECO, Top5_Theis_DECO, Top5_Winters_DECO, Top5_Sterpu_DECO)
+#adds rank within each study
+Table_2DECO_ASVs$Rank <- rep(seq(1:(nrow(Table_2DECO_ASVs)/length(unique(Table_2DECO_ASVs$Study)))), length(unique(Table_2DECO_ASVs$Study)))
+#aggregates genus classifications of ASVs
+pretable_DECO <- data.frame(ASV1 = Table_2DECO_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_2DECO_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_2DECO_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_2DECO_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_2DECO_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+
+#stacks ASV columns together and adds the columns to the rest of the table
+ASV_columns <- rbind(c(rep("Before DECONTAM", 5)), pretable, c(rep("After DECONTAM", 5)), pretable_DECO); Table_2 <- cbind(Table_2, ASV_columns)
+#renames columns
+colnames(Table_2) <- c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5")
+#removes all underscores
+Table_2 <- apply(X = Table_2, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_2 <- as.data.frame(Table_2, stringsAsFactors = FALSE)
+
+#formats table as flextable
+ft_2 <- flextable(Table_2)
+
+#produces formatted table 2
+Table2_formatted <- ft_2 %>% 
+                    theme_booktabs(bold_header = TRUE) %>% 
+                    align(align = "center", part = "all") %>% 
+                    style(j = c(3:7), pr_t = text_italic) %>% 
+                    style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 3, pr_t = text_bold_italic) %>% 
+                    style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 4, pr_t = text_bold_italic) %>% 
+                    style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
+                    style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
+                    style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
+                    merge_at(i = 1, j = 3:7) %>% 
+                    merge_at(i = 8, j = 3:7) %>%
+                    flextable::compose(i = 1, j = 1:2, as_paragraph(as_chunk(' '))) %>%
+                    flextable::compose(i = 8, j = 1:2, as_paragraph(as_chunk(' '))) %>%
+                    style(i = c(1,8), pr_t = text_bold) %>% 
+                    hline(i = c(1,7,8), border = border_dark_grey) %>% 
+                    vline(j = 2, border = border_dark_grey, part = "body") %>% 
+                    footnote(value = as_paragraph("ASV1-5 are rank designations based on percent relative abundance."), part = "header", ref_symbols = "") %>% 
+                    autofit(add_h = 0, add_w = 0); Table2_formatted
+```
+
+## Table S1 {#TableS1}
+
+A summary of prominent ASVs before and after DECONTAM in all studies which had any ASVs with a mean relative abundance greater than 1% across all placental samples.
+
+```{r Table_S1}
+
+#initializes table metadata for each study included in the reanalysis
+Table_S1 <- data.frame(
+  Study = c("Before DECONTAM", "Lauder", "Leiby", "Dinsdale", "Olomu", "Parnell", "Seferovic", "Theis", "Younge", "Winters", "Liu", "Leon", "Gomez-Arango", "Sterpu", "After DECONTAM", "Lauder", "Leiby", "Dinsdale", "Olomu", "Parnell", "Theis", "Winters", "Leon", "Sterpu"), 
+  Hypervariable_Region = c("Before DECONTAM", "V1-V2", "V1-V2", rep("V4", 7), "V4-V5", "V5-V7", rep("V6-V8", 2), "After DECONTAM", "V1-V2", "V1-V2", rep("V4", 5), "V5-V7", "V6-V8"), 
+  Strictly_Cesarean = c("Before DECONTAM", "No", "No", "No", "Yes", "Yes", "No", "Yes", "No", "Yes", "Yes", "No", "No", "Yes", "After DECONTAM", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "No", "Yes"),
+  No_CS_Subset_Reason = c("Before DECONTAM", "Only one CS sample", "Only one CS term subject", "Metadata unavailable", NA, NA, "Metadata unavailable", NA, "Metadata unavailable", NA, NA, "Metadata unavailable", "Metadata unavailable", NA, "After DECONTAM", "Only one CS sample", "Only one CS term subject", "Metadata unavailable", NA, NA, NA, NA, "Metadata unavailable", NA),
+  stringsAsFactors = FALSE)
+
+#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries
+Table_S1_ASVs <- rbind(Top5_Lauder, Top5_Leiby, Top5_Dinsdale, Top5_Olomu, Top5_Parnell, Top5_Seferovic, Top5_Theis, Top5_Younge, Top5_Winters_P, Top5_Liu, Top5_Leon, Top5_GomezArango, Top5_Sterpu)
+#adds rank within each study
+Table_S1_ASVs$Rank <- rep(seq(1:(nrow(Table_S1_ASVs)/length(unique(Table_S1_ASVs$Study)))), length(unique(Table_S1_ASVs$Study)))
+#aggregates genus classifications of ASVs
+pretable <- data.frame(ASV1 = Table_S1_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_S1_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_S1_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_S1_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_S1_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+
+#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries after DECONTAM processing
+Table_S1DECO_ASVs <- rbind(Top5_Lauder_DECO, Top5_Leiby_DECO, Top5_Dinsdale_DECO, Top5_Olomu_DECO, Top5_Parnell_DECO, Top5_Theis_DECO, Top5_Winters_DECO, Top5_Leon_DECO, Top5_Sterpu_DECO)
+#adds rank within each study
+Table_S1DECO_ASVs$Rank <- rep(seq(1:(nrow(Table_S1DECO_ASVs)/length(unique(Table_S1DECO_ASVs$Study)))), length(unique(Table_S1DECO_ASVs$Study)))
+#aggregates genus classifications of ASVs
+pretable_DECO <- data.frame(ASV1 = Table_S1DECO_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_S1DECO_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_S1DECO_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_S1DECO_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_S1DECO_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+
+#stacks ASV columns together and adds the columns to the rest of the table
+ASV_columns <- rbind(c(rep("Before DECONTAM", 5)), pretable, c(rep("After DECONTAM", 5)), pretable_DECO)
+#merges metadata and ranked ASV columns
+Table_S1 <- cbind(Table_S1, ASV_columns)
+#renames columns
+colnames(Table_S1) <- c("Study", "16S rRNA gene hypervariable region", "Strictly Cesarean Term Samples", "Why CS subset was not possible", "ASV1", "ASV2", "ASV3", "ASV4", "ASV5")
+#removes all underscores
+Table_S1 <- apply(X = Table_S1, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_S1 <- as.data.frame(Table_S1, stringsAsFactors = FALSE)
+
+#formats table as flextable
+ft_S1 <- flextable(Table_S1)
+
+#produces formatted table S1
+Table_S1_formatted <- ft_S1 %>% 
+                      theme_booktabs(bold_header = TRUE) %>% 
+                      align(align = "center", part = "all") %>% 
+                      style(j = c(5:9), pr_t = text_italic)  %>% 
+                      bg(~ `Strictly Cesarean Term Samples` == "Yes", bg = "grey") %>% 
+                      style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
+                      style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
+                      style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
+                      style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 8, pr_t = text_bold_italic) %>% 
+                      style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 9, pr_t = text_bold_italic) %>% 
+                      merge_at(i = 1, j = 5:9) %>% 
+                      merge_at(i = 15, j = 5:9) %>% 
+                      flextable::compose(i = 1, j = 1:4, as_paragraph(as_chunk(' '))) %>% 
+                      flextable::compose(i = 15, j = 1:4, as_paragraph(as_chunk(' '))) %>% 
+                      style(i = c(1,15), pr_t = text_bold) %>% 
+                      hline(i = c(1,14,15), border = border_dark_grey) %>% 
+                      vline(j = 4, border = border_dark_grey, part = "body") %>% 
+                      footnote(value = as_paragraph("ASV1-5 are rank designations based on percent relative abundance."), part = "header", ref_symbols = "") %>% 
+                      autofit(add_h = 0, add_w = 0); Table_S1_formatted
+```
+
+## Table S2  {#TableS2}
+
+Top five ranked ASVs by study split by placental sampling region.
+
+```{r Table_S2}
+#Ceserean Term NIL placental samples split by placental region sampled.
+
+#Sterpu Split by $Level == "fetal", "decidua", "middle"
+#Theis Split by $Level == "Amnion-Chorion", "Villous Tree"
+#Winters Split by $Level == "Amnion", "Amnion-Chorion_Interface", "Subchorionic_Plate_Swab", "Villous Tree", "Basal_Plate"
+#Olomu was all Placental Parenchyma
+
+#recodes placental samples by region
+Olomu_rare_META$Region <- "Fetal"
+Sterpu_META_CS$Region <- Sterpu_META_CS$Level %>% recode(., "fetal" = "Fetal", "decidua" = "Maternal", "middle" = "Fetal")
+Theis_META_P$Region <- Theis_META_P$Level %>% recode(., "Amnion-Chorion" = "Fetal", "Villous Tree" = "Fetal")
+Winters_META_CST_UL$Region <- Winters_META_CST_UL$Level %>% recode(., "Amnion" = "Fetal", "Amnion-Chorion_Interface" = "Fetal", "Subchorionic_Plate_Swab" = "Fetal", "Villous Tree" = "Fetal", "Basal_Plate" = "Maternal")
+
+#returns top five ranked ASVs by study split by placental region
+Top5_Olomu_F <- top_ASVs_above_cutoff(ASV = Olomu_ASV_P, TAX = Olomu_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
+Top5_Sterpu_F <- top_ASVs_above_cutoff(ASV = Sterpu_ASV_CS %>% select_if(Sterpu_META_CS$Region == "Fetal"), TAX = Sterpu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+Top5_Sterpu_M <- top_ASVs_above_cutoff(ASV = Sterpu_ASV_CS %>% select_if(Sterpu_META_CS$Region == "Maternal"), TAX = Sterpu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+Top5_Theis_F <- top_ASVs_above_cutoff(ASV = Theis_ASV_P %>% select_if(Theis_META_P$Region == "Fetal"), TAX = Theis_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
+Top5_Winters_F <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL %>% select_if(Winters_META_CST_UL$Region == "Fetal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+Top5_Winters_M <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL %>% select_if(Winters_META_CST_UL$Region == "Maternal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+
+#stacks ranked ASV results from each study by row for fetal side samples
+Fetal_side_ASVs <- rbind(Top5_Olomu_F, Top5_Theis_F, Top5_Winters_F, Top5_Sterpu_F)
+#stacks ranked ASV results from each study by row for maternal side samples
+Maternal_side_ASVs <- rbind(Top5_Winters_M, Top5_Sterpu_M)
+#adds rank within each study
+Fetal_side_ASVs$Rank <- rep(seq(1:(nrow(Fetal_side_ASVs)/length(unique(Fetal_side_ASVs$Study)))), length(unique(Fetal_side_ASVs$Study)))
+#adds rank within each study
+Maternal_side_ASVs$Rank <- rep(seq(1:(nrow(Maternal_side_ASVs)/length(unique(Maternal_side_ASVs$Study)))), length(unique(Maternal_side_ASVs$Study)))
+#aggregates genus classifications of ASVs by rank for fetal side samples
+pretable_fetal <- data.frame(ASV1 = Fetal_side_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Fetal_side_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Fetal_side_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Fetal_side_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Fetal_side_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+#aggregates genus classifications of ASVs by rank for maternal side samples
+pretable_maternal <- data.frame(ASV1 = Maternal_side_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Maternal_side_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Maternal_side_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Maternal_side_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Maternal_side_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+#groups fetal and maternal side genus classifications
+Pretable <- rbind(c(rep("Fetal-side", 5)), pretable_fetal, c(rep("Maternal-side", 5)), pretable_maternal)
+
+#recodes placental samples by region for DECONTAM processed samples
+OlomuD_rare_META$Region <- "Fetal"
+#recodes placental samples by region for DECONTAM processed samples and filters metadata to cesarean delivered samples
+SterpuD_rare_META$Region <- SterpuD_rare_META$Level %>% recode(., "fetal" = "Fetal", "decidua" = "Maternal", "middle" = "Fetal"); SterpuD_rare_META_CS <- SterpuD_rare_META %>% filter(Delivery == "Cesarean")
+TheisD_rare_META$Region <- TheisD_rare_META$Level %>% recode(., "Amnion-Chorion" = "Fetal", "Villous Tree" = "Fetal")
+WintersD_rare_META$Region <- WintersD_rare_META$Level %>% recode(., "Amnion" = "Fetal", "Amnion-Chorion_Interface" = "Fetal", "Subchorionic_Plate_Swab" = "Fetal", "Villous Tree" = "Fetal", "Basal_Plate" = "Maternal")
+
+#returns top five ranked ASVs by study split by placental region after DECONTAM processing
+Top5_OlomuD_F <- top_ASVs_above_cutoff(ASV = OlomuD_rare_ASV, TAX = OlomuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
+Top5_SterpuD_F <- top_ASVs_above_cutoff(ASV = SterpuD_rare_ASV %>% select_if(SterpuD_rare_META$Region == "Fetal" & SterpuD_rare_META$Delivery == "Cesarean"), TAX = SterpuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+Top5_SterpuD_M <- top_ASVs_above_cutoff(ASV = SterpuD_rare_ASV %>% select_if(SterpuD_rare_META$Region == "Fetal" & SterpuD_rare_META$Delivery == "Cesarean"), TAX = SterpuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
+Top5_TheisD_F <- top_ASVs_above_cutoff(ASV = TheisD_rare_ASV %>% select_if(TheisD_rare_META$Region == "Fetal"), TAX = TheisD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
+Top5_WintersD_F <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV %>% select_if(WintersD_rare_META$Delivery == "Cesarean" & WintersD_rare_META$GA == "Term" & WintersD_rare_META$Labor == "NIL" & WintersD_rare_META$Region == "Fetal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+Top5_WintersD_M <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV %>% select_if(WintersD_rare_META$Delivery == "Cesarean" & WintersD_rare_META$GA == "Term" & WintersD_rare_META$Labor == "NIL" & WintersD_rare_META$Region == "Maternal"), TAX = WintersD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+
+#stacks ranked ASV results from each study by row for fetal side samples after DECONTAM processing
+fetal_side_ASVs_DECO <- rbind(Top5_OlomuD_F, Top5_TheisD_F, Top5_WintersD_F, Top5_SterpuD_F)
+#stacks ranked ASV results from each study by row for maternal side samples after DECONTAM processing
+maternal_side_ASVs_DECO <- rbind(Top5_WintersD_M, Top5_SterpuD_M)
+
+#initializes `ranks` object to hold ASV ranks based on the number of ASVs per study. 
+ranks <- c()
+#gets ranks by study
+for(i in 1:length(unique(fetal_side_ASVs_DECO$Study))){
+  ranks <- append(ranks, 1:sum(fetal_side_ASVs_DECO$Study == unique(fetal_side_ASVs_DECO$Study)[i]))
+}
+#stores `ranks` into a `Rank` column for fetal-side samples and re-initializes `ranks`
+fetal_side_ASVs_DECO$Rank <- ranks; ranks <- c()
+#gets ranks by study
+maternal_side_ASVs_DECO$Rank <- for(i in 1:length(unique(maternal_side_ASVs_DECO$Study))){
+  ranks <- append(ranks, 1:sum(maternal_side_ASVs_DECO$Study == unique(maternal_side_ASVs_DECO$Study)[i]))
+}
+#stores `ranks` into a `Rank` column for maternal-side samples and re-initializes `ranks`
+maternal_side_ASVs_DECO$Rank <- ranks
+
+#aggregates genus classifications of ASVs by rank for fetal side samples
+pretable_fetal_DECO <- data.frame(ASV1 = fetal_side_ASVs_DECO %>% filter(Rank == 1) %>% pull(Genus), ASV2 = fetal_side_ASVs_DECO %>% filter(Rank == 2) %>% pull(Genus),ASV3 = fetal_side_ASVs_DECO %>% filter(Rank == 3) %>% pull(Genus),ASV4 = fetal_side_ASVs_DECO %>% filter(Rank == 4) %>% pull(Genus),ASV5 = fetal_side_ASVs_DECO %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+#aggregates genus classifications of ASVs by rank for maternal side samples
+pretable_maternal_DECO <- data.frame(ASV1 = maternal_side_ASVs_DECO %>% filter(Rank == 1) %>% pull(Genus), ASV2 = maternal_side_ASVs_DECO %>% filter(Rank == 2) %>% pull(Genus),ASV3 = maternal_side_ASVs_DECO %>% filter(Rank == 3) %>% pull(Genus),ASV4 = maternal_side_ASVs_DECO %>% filter(Rank == 4) %>% pull(Genus),ASV5 = maternal_side_ASVs_DECO %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
+#groups fetal and maternal side genus classifications after DECONTAM processing
+Pretable_DECO <- rbind(c(rep("Fetal-side", 5)), pretable_fetal_DECO, c(rep("Maternal-side", 5)), pretable_maternal_DECO)
+
+#metadata for table S2
+Table_S2_Meta <- data.frame(Study = c("Fetal-side","Olomu", "Theis", "Winters","Sterpu", "Maternal-side", "Winters", "Sterpu"), Hypervariable_Region = c("Fetal-side", rep("V4", 3), "V6-V8", "Maternal-side", rep("V4", 1), "V6-V8"))
+#combines genus classification data with metadata
+Table_S2 <- cbind(Table_S2_Meta, Pretable, Pretable_DECO)
+#removes all underscores
+Table_S2 <- apply(X = Table_S2, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_S2 <- as.data.frame(Table_S2, stringsAsFactors = FALSE)
+#renames columns
+colnames(Table_S2) <- c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5", "DASV1", "DASV2", "DASV3", "DASV4", "DASV5")
+#generates dataframe for renaming header with key column: `col_keys`
+new_header <- data.frame(
+  col_keys = colnames(Table_S2), 
+  header_above = c("Study", "16S rRNA gene hypervariable region", rep("Before DECONTAM", 5), rep("After DECONTAM", 5)), 
+  header_below = c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5", "ASV1", "ASV2", "ASV3", "ASV4", "ASV5"),
+  stringsAsFactors = FALSE)
+#formats table as flextable
+ft_S2 <- flextable(Table_S2)
+
+#produces formatted table S2
+Table_S2_formatted <- ft_S2  %>% 
+                      style(j = c(3:12), pr_t = text_italic) %>% 
+                      style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 3, pr_t = text_bold_italic) %>% 
+                      style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 4, pr_t = text_bold_italic) %>% 
+                      style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
+                      style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
+                      style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
+                      style(~ DASV1 == "Lactobacillus" | DASV1 == "Lactobacillus*", j = 8, pr_t = text_bold_italic) %>% 
+                      style(~ DASV2 == "Lactobacillus" | DASV2 == "Lactobacillus*", j = 9, pr_t = text_bold_italic) %>% 
+                      style(~ DASV3 == "Lactobacillus" | DASV3 == "Lactobacillus*", j = 10, pr_t = text_bold_italic) %>% 
+                      style(~ DASV4 == "Lactobacillus" | DASV4 == "Lactobacillus*", j = 11, pr_t = text_bold_italic) %>% 
+                      style(~ DASV5 == "Lactobacillus" | DASV5 == "Lactobacillus*", j = 12, pr_t = text_bold_italic) %>% 
+                      merge_at(i = 1, j = 3:7) %>% 
+                      merge_at(i = 6, j = 3:7) %>% 
+                      merge_at(i = 1, j = 8:12) %>% 
+                      merge_at(i = 6, j = 8:12) %>% 
+                      style(i = c(1,6), pr_t = text_italic) %>% 
+                      flextable::compose(i = 1, j = 1:2, as_paragraph(as_chunk(' '))) %>% 
+                      flextable::compose(i = 6, j = 1:2, as_paragraph(as_chunk(' '))) %>% 
+                      footnote(i = c(1, 6),j = 3:12, value = as_paragraph(
+                          c("Samples labeled 'amnion', 'amnion-chorion', 'amnion-chorion interface', 'sub-chorionic plate swab', 'placental parenchyma', 'villous tree' or 'fetal' were categorized as placental samples from the fetal side.", 
+                            "Samples labeled 'decidua' or 'basal plate' were categorized as placental samples from the maternal side.")), ref_symbols = c("a", "b"), part = "body") %>% 
+                      set_header_df(mapping = new_header, key = "col_keys") %>% 
+                      merge_v(part = "header", j = c(1:2)) %>% 
+                      merge_h(part = "header", i = 1) %>% 
+                      theme_booktabs(bold_header = TRUE) %>% 
+                      align(align = "center", part = "all") %>% 
+                      hline(i = c(1,5,6), border = border_dark_grey) %>% 
+                      vline(j = c(2,7), border = border_dark_grey) %>% 
+                      footnote(value = as_paragraph(
+                         c("ASV1-5 are rank designations based on percent relative abundance.")), part = "header", ref_symbols = ""); Table_S2_formatted
+```
+
+## Table S3 {#TableS3}
+
+Dispersion and clustering of placental samples compared to technical controls by level.
+
+```{r Table_S3}
+
+#returns dispersion statistics of placental samples and technical controls for de Goffau study
+disp_dg <- anova(betadisper(d = vegdist(t(deGoffau_rare_ASV), method = "bray"), group = deGoffau_rare_META$Type))
+#returns NPMANOVA statistics of placental samples compared to technical controls for de Goffau study
+set.seed(1); adonis_dg <- adonis(formula = t(deGoffau_rare_ASV) ~ Type, data = deGoffau_rare_META, method = "bray")
+
+#returns dispersion statistics of fetal membrane placental samples and technical controls for Parnell study
+disp_Parnell_FM <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if(Parnell_rare_META$Level == "Fetal Membrane" | Parnell_rare_META$Level == "Technical Control")), method = "bray"), group = Parnell_rare_META %>% filter(Level == "Fetal Membrane" | Type == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of placental villus placental samples and technical controls for Parnell study
+disp_Parnell_PV <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if(Parnell_rare_META$Level == "Placental Villus" | Parnell_rare_META$Level == "Technical Control")), method = "bray"), group = Parnell_rare_META %>% filter(Level == "Placental Villus" | Type == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of basal plate placental samples and technical controls for Parnell study
+disp_Parnell_BP <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if(Parnell_rare_META$Level == "Basal Plate" | Parnell_rare_META$Level == "Technical Control")), method = "bray"), group = Parnell_rare_META %>% filter(Level == "Basal Plate" | Type == "Technical Control") %>% pull(Level)))
+#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
+set.seed(1); adonis_Parnell_Lvl <- pairwise.adonis2(x = t(Parnell_rare_ASV) ~ Level, data = Parnell_rare_META, nperm = 999)
+
+#returns dispersion statistics of placental samples and technical controls for Olomu study
+disp_Olomu <- anova(betadisper(d = vegdist(t(Olomu_ASV_PTC), method = "bray"), group = Olomu_META_PTC$Type))
+#returns NPMANOVA statistics of placental samples compared to technical controls for Olomu study
+set.seed(1); adonis_Olomu <- adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC, method = "bray")
+
+#returns dispersion statistics of fetal membrane placental samples and technical controls for Sterpu study
+disp_Sterpu_fetal <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "fetal" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "fetal" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of middle placental samples and technical controls for Sterpu study
+disp_Sterpu_middle <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "middle" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "middle" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of decidua placental samples and technical controls for Sterpu study
+disp_Sterpu_decidua <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "decidua" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "decidua" | Level == "Technical Control") %>% pull(Level)))
+
+#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
+set.seed(1); adonis_Sterpu_Lvl <- pairwise.adonis2(x = t(Sterpu_rare_ASV) ~ Level, data = Sterpu_rare_META, nperm = 999)
+
+#returns dispersion statistics of amnion-chorion placental samples and technical controls for Theis study
+disp_Theis_ac <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(Theis_rare_META$Level == "Amnion-Chorion" | Theis_rare_META$Level == "Technical Control")), method = "bray"), group = Theis_rare_META %>% filter(Level == "Amnion-Chorion" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of villous tree placental samples and technical controls for Theis study
+disp_Theis_vt <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(Theis_rare_META$Level == "Villous Tree" | Theis_rare_META$Level == "Technical Control")), method = "bray"), group = Theis_rare_META %>% filter(Level == "Villous Tree" | Level == "Technical Control") %>% pull(Level)))
+
+#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
+set.seed(1); adonis_Theis_Lvl <- pairwise.adonis2(x = t(Theis_rare_ASV) ~ Level, data = Theis_rare_META)
+
+#returns dispersion statistics of amnion placental samples and technical controls for Winters study
+disp_Winters_a <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Amnion" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Amnion" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of amnion-chorion placental samples and technical controls for Winters study
+disp_Winters_ac <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Amnion-Chorion_Interface" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Amnion-Chorion_Interface" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of subchorionic plate placental samples and technical controls for Winters study
+disp_Winters_sub <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Subchorionic_Plate_Swab" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Subchorionic_Plate_Swab" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of villous tree placental samples and technical controls for Winters study
+disp_Winters_vt <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Villous_Tree" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Villous_Tree" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of basal plate placental samples and technical controls for Winters study
+disp_Winters_bp <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Basal_Plate" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Basal_Plate" | Level == "Technical Control") %>% pull(Level)))
+
+#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
+set.seed(1); adonis_Winters_Lvl <- pairwise.adonis2(x = t(Winters_ASV_PTC) ~ Level, data = Winters_META_PTC)
+
+#Table S3 Metadata
+Table_S3_Meta <- data.frame(
+  Study = c("de Goffau", rep("Parnell", 3), "Olomu", rep("Sterpu", 3), rep("Theis", 2), rep("Winters", 5)),
+  Level = c("Villous tissue", "Fetal membrane", "Placental villus", "Basal plate", "Placental parenchyma", "Fetal", "Middle", "Decidua", "Amnion-chorion", "Villous tree", "Amnion", "Amnion-chorion", "Subchorion", "Villous tree", "Basal plate"),
+  stringsAsFactors = FALSE)
+
+#collates statistic results
+Table_S3_Results <- data.frame(
+  Disp_F_Stat = c(disp_dg$`F value`[1], disp_Parnell_FM$`F value`[1], disp_Parnell_PV$`F value`[1], disp_Parnell_BP$`F value`[1], disp_Olomu$`F value`[1], disp_Sterpu_fetal$`F value`[1], disp_Sterpu_middle$`F value`[1], disp_Sterpu_decidua$`F value`[1], disp_Theis_ac$`F value`[1], disp_Theis_vt$`F value`[1], disp_Winters_a$`F value`[1], disp_Winters_ac$`F value`[1], disp_Winters_sub$`F value`[1], disp_Winters_vt$`F value`[1], disp_Winters_bp$`F value`[1]),
+  Disp_P_Val = c(disp_dg$`Pr(>F)`[1], disp_Parnell_FM$`Pr(>F)`[1], disp_Parnell_PV$`Pr(>F)`[1], disp_Parnell_BP$`Pr(>F)`[1], disp_Olomu$`Pr(>F)`[1], disp_Sterpu_fetal$`Pr(>F)`[1], disp_Sterpu_middle$`Pr(>F)`[1], disp_Sterpu_decidua$`Pr(>F)`[1], disp_Theis_ac$`Pr(>F)`[1], disp_Theis_vt$`Pr(>F)`[1], disp_Winters_a$`Pr(>F)`[1], disp_Winters_ac$`Pr(>F)`[1], disp_Winters_sub$`Pr(>F)`[1], disp_Winters_vt$`Pr(>F)`[1], disp_Winters_bp$`Pr(>F)`[1]),
+  ADONIS_R2 = c(adonis_dg$aov.tab$R2[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$R2[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$R2[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$R2[1], adonis_Olomu$aov.tab$R2[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$R2[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$R2[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$R2[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$R2[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$R2[1]),
+  ADONIS_F_Stat = c(adonis_dg$aov.tab$F.Model[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$F[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$F[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$F[1], adonis_Olomu$aov.tab$F.Model[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$F[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$F[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$F[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$F[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$F[1]),
+  ADONIS_P_Val = c(adonis_dg$aov.tab$`Pr(>F)`[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$`Pr(>F)`[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$`Pr(>F)`[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$`Pr(>F)`[1], adonis_Olomu$aov.tab$`Pr(>F)`[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$`Pr(>F)`[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$`Pr(>F)`[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$`Pr(>F)`[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$`Pr(>F)`[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$`Pr(>F)`[1]),
+  stringsAsFactors = FALSE)
+#dispersion P value statistic for de Goffau is less than 0.001
+Table_S3_Results$Disp_P_Val[1] <- 0
+#trims statistics to 3 significant digits
+Table_S3_Results <- signif(Table_S3_Results, digits = 3)
+
+#combines metadata with results
+Table_S3 <- cbind(Table_S3_Meta, Table_S3_Results)
+
+#generates dataframe for renaming header with key column: `col_keys`
+new_header <- data.frame(
+  col_keys = colnames(Table_S3),
+  header_above = c("Study", "Level", rep("Dispersion", 2), rep("NPMANOVA", 3)),
+  header_below = c("Study", "Level", "F Statistic", "P value", "R2", "F Statistic", "P Value"),
+  stringsAsFactors = FALSE)
+
+#formats table as flextable
+ft_S3 <- flextable(Table_S3)
+#produces formatted Table S3
+Table_S3_formatted <- ft_S3 %>% 
+                      set_header_df(mapping = new_header, key = "col_keys") %>% 
+                      merge_h(part = "header", i = 1) %>% 
+                      flextable::compose(i= 2, j = 5, part = "header", value = as_paragraph("R", as_sup("2"))) %>% 
+                      theme_booktabs(bold_header = TRUE) %>% 
+                      align(align = "center", part = "all") %>% 
+                      style(~ Disp_P_Val < 0.05, j = 4, pr_t = text_bold) %>% 
+                      style(~ ADONIS_P_Val < 0.05, j = 7, pr_t = text_bold) %>% 
+                      flextable::compose(i = 1, j = 4, part = "body", value = as_paragraph("<0.001")) %>%
+                      flextable::compose(i = 1, j = 3, part = "body", value = as_paragraph("6590")) %>%
+                      merge_v(j=1, part = "body") %>% 
+                      merge_v(j=c(1,2), part = "header") %>%
+                      hline(i = c(1,4,5, 8, 10), border = border_dark_grey) %>% 
+                      vline(j=c(2,4), border = border_dark_grey) %>% 
+                      footnote(i = 6:8, j = 7, ref_symbols = c("1"), value = as_paragraph(
+  "ADONIS significance is likely to be due to differences in dispersion and unbalanced groups. Regardless, ", as_i("Staphylococcus"), " was predominant in samples responsible for significance.
+    ")) %>% 
+                      footnote(i = 10, j = 7, ref_symbols = c("2"), value = as_paragraph(
+  "Room samples (exposed to room air for 20 minutes), which were predominantly ", as_i("Delftia"), ", ", as_i("Blastomonas"), ", and ", as_i("Achromobacter"), ", from the Theis et al. dataset were responsible for ADONIS significance, which disappeared after their removal.
+    ")) %>% 
+                      footnote(i = c(11,15), j = 7, ref_symbols = c("3"), value = as_paragraph(
+  "Amnion and Basal Plate samples driving significance were characterized by ", as_i("Staphylococcus"), ", ", as_i("Corynebacterium"), ", ", as_i("Serratia*"), ", and ", as_i("Cupriavidus"), "."))
+#allows table to be adjusted based on viewing window size and fixes border issue
+Table_S3_formatted <- autofit(Table_S3_formatted) %>% 
+                      fix_border_issues() %>% 
+                      width(., j = c(5,7), width = .8); Table_S3_formatted
+```
