@@ -1,7 +1,7 @@
 ---
 title: "R Markdown: IS THERE A PLACENTAL MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL MICROBIOTA DATASETS"
 author: "Jonathan Panzer"
-date: "January 24th, 2021"
+date: "March 22nd, 2022"
 output:
   html_document:
     toc: true
@@ -120,13 +120,8 @@ knitr::opts_chunk$set(echo = TRUE)
       * [Younge et al. normalization](#YoungeNormalization)
       * [Younge et al. post-normalization subset](#YoungePostNSubset)
       * [Younge et al. PCoA](#YoungePCoA)
-4. [Tables](#Tables)
-      * [Border and text definitions](#BandTDefs)
-    * [Table 1](#Table1)
-    * [Table 2](#Table2)
-    * [Table S1](#TableS1)
-    * [Table S2](#TableS2)
-    * [Table S3](#TableS3)
+4. [Statistics](#Statistics)
+    * [Table S3 Statistics](#TableS3)
 
 ***
 
@@ -740,6 +735,10 @@ disp_V4P_del <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), grou
 #performs pairwise analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
 #all pairwise comparsions significantly different
 set.seed(1); adonis_pw_V4P_del <- pairwise.adonis2(x = t(V4_ASV_P) ~ Delivery, data = V4_META_P)
+
+#performs pairwise analysis of variance between sample types (gestational age) using ADONIS (NPMANOVA).
+#all pairwise comparsions significantly different
+set.seed(1); adonis_pw_V4P_ga <- pairwise.adonis2(x = t(V4_ASV_P) ~ GA, data = V4_META_P)
 ```
 
 ## V4 Heatmaps by Study (Figure 6) {#V4Heatmaps}
@@ -2504,326 +2503,9 @@ palette(pal)
 
 ***
 
-# Tables {#Tables}
+# Statistics {#Statistics}
 
-## Border and text definitions {#BandTDefs}
-
-These help define the text and border formatting for the following tables.
-
-```{r Border_Text_Definitions}
-
-#border definitions
-border_thin = fp_border(color="gray", width = 1)
-border_dark_grey <- fp_border(color = "#666666", width = 2)
-
-#text definitions
-text_italic <- fp_text(italic = TRUE)
-text_bold <- fp_text(bold = TRUE)
-text_bold_italic <- fp_text(bold = TRUE, italic = TRUE)
-text_bold_italic_red <- fp_text(bold = TRUE, italic = TRUE, color = "red")
-```
-
-## Table 1 {#Table1}
-
-Overview of placental microbiota studies using 16S rRNA gene sequencing that were included in the critical review and reanalysis.
-
-```{r Table_1}
-
-#initializes table metadata for each study included in the reanalysis
-Table_1 <- data.frame(
-  Study = c("de Goffau Part I", "Lauder", "Leiby", "Tang", "Dinsdale", "Olomu", "Parnell", "Seferovic", "Theis Part I", "Younge", "Winters", "Liu", "Leon", "Gomez-Arango", "Sterpu"), 
-  hyperregion = c(rep("V1-V2", 3), "V3-V4", rep("V4", 7), "V4-V5", "V5-V7", rep("V6-V8", 2)), 
-  Cesarean.Term = c(80, 1, 1, 15, "[19]", 47, 34, 26,29,5, 28, 42, "[136]", 16, 50), 
-  Cesarean.Preterm = c(0, 0,5,0,"[19]",0,0,8,0,5,14,0,"[136]",0,0), 
-  Vaginal.Term = c(0, 5, 19, 0, "[31]", 0, 23, 0,0,0, 21, 36, "[120]", 20, 26), 
-  Vaginal.Preterm = c(0, 0, 15, 0, "[31]", 0, 0, 18, 0, 0, 6, 0, "[120]", 0,0), 
-  Technical_Controls = c(47, 39, 103, 0,8,131,21,2,43,0,12,0,21,0,6), 
-  Delivery = c("X", "X", "X", "X", "X", "X", "X", " ", "X", "X", "X", "X", " ", "X", "X"), 
-  Gestational_Age = c("X", "X", "X", "X", " ", "X", "X", " ", "X", " ", "X", "X", " ", "X", "X"), 
-  Processed_with_DECONTAM = c("X", "X", "X", " ", "X", "X", "X", " ", "X", " ", "X", " ", "X", " ", "X"),
-  stringsAsFactors = FALSE)
-#renames columns
-colnames(Table_1)[c(1:2,7,9:10)] <- c("Study", "16S rRNA gene hypervariable region", "Technical Controls", "Gestational Age", "Ability to run DECONTAM")
-#reorders studies by amount of metadata included
-Table_1 <- Table_1[c(1:3,6,7,9,11,15,5,4,12,14,10,13,8),]
-
-#formats table as flextable
-ft_1 <- flextable(Table_1)
-
-#generates dataframe for renaming header with key column: `col_keys`
-new_header <- data.frame(
-  col_keys = colnames(Table_1),
-  header_above = c("Study", "16S rRNA gene hypervariable region", "Cesarean", "Cesarean", "Vaginal", "Vaginal", "Technical Controls", rep("Ability to split by", 2), "Ability to run DECONTAM"),
-  header_below = c("Study", "16S rRNA gene hypervariable region", "Term", "Preterm", "Term", "Preterm", "Technical Controls", "Delivery", "Gestational Age", "Ability to run DECONTAM"), 
-  stringsAsFactors = FALSE)
-
-#produces formatted table 1
-Table1_formatted <- set_header_df(ft_1, mapping = new_header, key = "col_keys") %>% 
-                    merge_v(part = "header", j = c(1:2,7,10)) %>% 
-                    merge_h(part = "header", i = 1) %>% 
-                    theme_booktabs(bold_header = TRUE) %>% 
-                    align(align = "center", part = "all") %>% 
-                    footnote(i = c(4, 6, 8, 10, 12, 13), j = 3, value = as_paragraph("Indicates placental samples delivered without labor."), ref_symbols = "a", part = "body") %>% 
-                    hline(border = border_thin) %>% 
-                    merge_h_range(i = c(9, 14), j1 = 3, j2 = 4) %>% 
-                    merge_h_range(i = c(9, 14), j1 = 5, j2 = 6) %>% 
-                    vline(border = border_dark_grey,j = c(2, 4, 6)); Table1_formatted
-```
-
-## Table 2 {#Table2}
-
-Table 2 summarizes the top five ranked ASVs from all studies which could be restricted to placentas from term cesarean deliveries before and after DECONTAM processing.
-
-```{r Table_2}
-
-#initializes table metadata for studies which could be restricted to placentas from term cesarean deliveries
-Table_2 <- data.frame(
-  Study = c("", "Olomu", "Parnell", "Theis", "Winters", "Liu", "Sterpu", "", "Olomu", "Parnell", "Theis", "Winters", "Sterpu"), 
-  Hypervariable_Region = c("", rep("V4", 4), "V4-V5", "V6-V8", "", rep("V4", 4), "V6-V8"), 
-  stringsAsFactors = FALSE)
-
-#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries
-Table_2_ASVs <- rbind(Top5_Olomu, Top5_Parnell, Top5_Theis, Top5_Winters_P, Top5_Liu, Top5_Sterpu)
-#adds rank within each study
-Table_2_ASVs$Rank <- rep(seq(1:(nrow(Table_2_ASVs)/length(unique(Table_2_ASVs$Study)))), length(unique(Table_2_ASVs$Study)))
-#aggregates genus classifications of ASVs
-pretable <- data.frame(ASV1 = Table_2_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_2_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_2_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_2_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_2_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-
-#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries after DECONTAM processing
-Table_2DECO_ASVs <- rbind(Top5_Olomu_DECO, Top5_Parnell_DECO, Top5_Theis_DECO, Top5_Winters_DECO, Top5_Sterpu_DECO)
-#adds rank within each study
-Table_2DECO_ASVs$Rank <- rep(seq(1:(nrow(Table_2DECO_ASVs)/length(unique(Table_2DECO_ASVs$Study)))), length(unique(Table_2DECO_ASVs$Study)))
-#aggregates genus classifications of ASVs
-pretable_DECO <- data.frame(ASV1 = Table_2DECO_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_2DECO_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_2DECO_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_2DECO_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_2DECO_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-
-#stacks ASV columns together and adds the columns to the rest of the table
-ASV_columns <- rbind(c(rep("Before DECONTAM", 5)), pretable, c(rep("After DECONTAM", 5)), pretable_DECO); Table_2 <- cbind(Table_2, ASV_columns)
-#renames columns
-colnames(Table_2) <- c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5")
-#removes all underscores
-Table_2 <- apply(X = Table_2, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_2 <- as.data.frame(Table_2, stringsAsFactors = FALSE)
-
-#formats table as flextable
-ft_2 <- flextable(Table_2)
-
-#produces formatted table 2
-Table2_formatted <- ft_2 %>% 
-                    theme_booktabs(bold_header = TRUE) %>% 
-                    align(align = "center", part = "all") %>% 
-                    style(j = c(3:7), pr_t = text_italic) %>% 
-                    style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 3, pr_t = text_bold_italic) %>% 
-                    style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 4, pr_t = text_bold_italic) %>% 
-                    style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
-                    style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
-                    style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
-                    merge_at(i = 1, j = 3:7) %>% 
-                    merge_at(i = 8, j = 3:7) %>%
-                    flextable::compose(i = 1, j = 1:2, as_paragraph(as_chunk(' '))) %>%
-                    flextable::compose(i = 8, j = 1:2, as_paragraph(as_chunk(' '))) %>%
-                    style(i = c(1,8), pr_t = text_bold) %>% 
-                    hline(i = c(1,7,8), border = border_dark_grey) %>% 
-                    vline(j = 2, border = border_dark_grey, part = "body") %>% 
-                    footnote(value = as_paragraph("ASV1-5 are rank designations based on percent relative abundance."), part = "header", ref_symbols = "") %>% 
-                    autofit(add_h = 0, add_w = 0); Table2_formatted
-```
-
-## Table S1 {#TableS1}
-
-A summary of prominent ASVs before and after DECONTAM in all studies which had any ASVs with a mean relative abundance greater than 1% across all placental samples.
-
-```{r Table_S1}
-
-#initializes table metadata for each study included in the reanalysis
-Table_S1 <- data.frame(
-  Study = c("Before DECONTAM", "Lauder", "Leiby", "Dinsdale", "Olomu", "Parnell", "Seferovic", "Theis", "Younge", "Winters", "Liu", "Leon", "Gomez-Arango", "Sterpu", "After DECONTAM", "Lauder", "Leiby", "Dinsdale", "Olomu", "Parnell", "Theis", "Winters", "Leon", "Sterpu"), 
-  Hypervariable_Region = c("Before DECONTAM", "V1-V2", "V1-V2", rep("V4", 7), "V4-V5", "V5-V7", rep("V6-V8", 2), "After DECONTAM", "V1-V2", "V1-V2", rep("V4", 5), "V5-V7", "V6-V8"), 
-  Strictly_Cesarean = c("Before DECONTAM", "No", "No", "No", "Yes", "Yes", "No", "Yes", "No", "Yes", "Yes", "No", "No", "Yes", "After DECONTAM", "No", "No", "No", "Yes", "Yes", "Yes", "Yes", "No", "Yes"),
-  No_CS_Subset_Reason = c("Before DECONTAM", "Only one CS sample", "Only one CS term subject", "Metadata unavailable", NA, NA, "Metadata unavailable", NA, "Metadata unavailable", NA, NA, "Metadata unavailable", "Metadata unavailable", NA, "After DECONTAM", "Only one CS sample", "Only one CS term subject", "Metadata unavailable", NA, NA, NA, NA, "Metadata unavailable", NA),
-  stringsAsFactors = FALSE)
-
-#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries
-Table_S1_ASVs <- rbind(Top5_Lauder, Top5_Leiby, Top5_Dinsdale, Top5_Olomu, Top5_Parnell, Top5_Seferovic, Top5_Theis, Top5_Younge, Top5_Winters_P, Top5_Liu, Top5_Leon, Top5_GomezArango, Top5_Sterpu)
-#adds rank within each study
-Table_S1_ASVs$Rank <- rep(seq(1:(nrow(Table_S1_ASVs)/length(unique(Table_S1_ASVs$Study)))), length(unique(Table_S1_ASVs$Study)))
-#aggregates genus classifications of ASVs
-pretable <- data.frame(ASV1 = Table_S1_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_S1_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_S1_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_S1_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_S1_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-
-#stacks all top five ranked ASVs from studies which could be restricted to placentas from cesarean term deliveries after DECONTAM processing
-Table_S1DECO_ASVs <- rbind(Top5_Lauder_DECO, Top5_Leiby_DECO, Top5_Dinsdale_DECO, Top5_Olomu_DECO, Top5_Parnell_DECO, Top5_Theis_DECO, Top5_Winters_DECO, Top5_Leon_DECO, Top5_Sterpu_DECO)
-#adds rank within each study
-Table_S1DECO_ASVs$Rank <- rep(seq(1:(nrow(Table_S1DECO_ASVs)/length(unique(Table_S1DECO_ASVs$Study)))), length(unique(Table_S1DECO_ASVs$Study)))
-#aggregates genus classifications of ASVs
-pretable_DECO <- data.frame(ASV1 = Table_S1DECO_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Table_S1DECO_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Table_S1DECO_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Table_S1DECO_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Table_S1DECO_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-
-#stacks ASV columns together and adds the columns to the rest of the table
-ASV_columns <- rbind(c(rep("Before DECONTAM", 5)), pretable, c(rep("After DECONTAM", 5)), pretable_DECO)
-#merges metadata and ranked ASV columns
-Table_S1 <- cbind(Table_S1, ASV_columns)
-#renames columns
-colnames(Table_S1) <- c("Study", "16S rRNA gene hypervariable region", "Strictly Cesarean Term Samples", "Why CS subset was not possible", "ASV1", "ASV2", "ASV3", "ASV4", "ASV5")
-#removes all underscores
-Table_S1 <- apply(X = Table_S1, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_S1 <- as.data.frame(Table_S1, stringsAsFactors = FALSE)
-
-#formats table as flextable
-ft_S1 <- flextable(Table_S1)
-
-#produces formatted table S1
-Table_S1_formatted <- ft_S1 %>% 
-                      theme_booktabs(bold_header = TRUE) %>% 
-                      align(align = "center", part = "all") %>% 
-                      style(j = c(5:9), pr_t = text_italic)  %>% 
-                      bg(~ `Strictly Cesarean Term Samples` == "Yes", bg = "grey") %>% 
-                      style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
-                      style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
-                      style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
-                      style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 8, pr_t = text_bold_italic) %>% 
-                      style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 9, pr_t = text_bold_italic) %>% 
-                      merge_at(i = 1, j = 5:9) %>% 
-                      merge_at(i = 15, j = 5:9) %>% 
-                      flextable::compose(i = 1, j = 1:4, as_paragraph(as_chunk(' '))) %>% 
-                      flextable::compose(i = 15, j = 1:4, as_paragraph(as_chunk(' '))) %>% 
-                      style(i = c(1,15), pr_t = text_bold) %>% 
-                      hline(i = c(1,14,15), border = border_dark_grey) %>% 
-                      vline(j = 4, border = border_dark_grey, part = "body") %>% 
-                      footnote(value = as_paragraph("ASV1-5 are rank designations based on percent relative abundance."), part = "header", ref_symbols = "") %>% 
-                      autofit(add_h = 0, add_w = 0); Table_S1_formatted
-```
-
-## Table S2  {#TableS2}
-
-Top five ranked ASVs by study split by placental sampling region.
-
-```{r Table_S2}
-#Ceserean Term NIL placental samples split by placental region sampled.
-
-#Sterpu Split by $Level == "fetal", "decidua", "middle"
-#Theis Split by $Level == "Amnion-Chorion", "Villous Tree"
-#Winters Split by $Level == "Amnion", "Amnion-Chorion_Interface", "Subchorionic_Plate_Swab", "Villous Tree", "Basal_Plate"
-#Olomu was all Placental Parenchyma
-
-#recodes placental samples by region
-Olomu_rare_META$Region <- "Fetal"
-Sterpu_META_CS$Region <- Sterpu_META_CS$Level %>% recode(., "fetal" = "Fetal", "decidua" = "Maternal", "middle" = "Fetal")
-Theis_META_P$Region <- Theis_META_P$Level %>% recode(., "Amnion-Chorion" = "Fetal", "Villous Tree" = "Fetal")
-Winters_META_CST_UL$Region <- Winters_META_CST_UL$Level %>% recode(., "Amnion" = "Fetal", "Amnion-Chorion_Interface" = "Fetal", "Subchorionic_Plate_Swab" = "Fetal", "Villous Tree" = "Fetal", "Basal_Plate" = "Maternal")
-
-#returns top five ranked ASVs by study split by placental region
-Top5_Olomu_F <- top_ASVs_above_cutoff(ASV = Olomu_ASV_P, TAX = Olomu_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
-Top5_Sterpu_F <- top_ASVs_above_cutoff(ASV = Sterpu_ASV_CS %>% select_if(Sterpu_META_CS$Region == "Fetal"), TAX = Sterpu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
-Top5_Sterpu_M <- top_ASVs_above_cutoff(ASV = Sterpu_ASV_CS %>% select_if(Sterpu_META_CS$Region == "Maternal"), TAX = Sterpu_TAX_CS, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
-Top5_Theis_F <- top_ASVs_above_cutoff(ASV = Theis_ASV_P %>% select_if(Theis_META_P$Region == "Fetal"), TAX = Theis_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
-Top5_Winters_F <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL %>% select_if(Winters_META_CST_UL$Region == "Fetal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
-Top5_Winters_M <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL %>% select_if(Winters_META_CST_UL$Region == "Maternal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
-
-#stacks ranked ASV results from each study by row for fetal side samples
-Fetal_side_ASVs <- rbind(Top5_Olomu_F, Top5_Theis_F, Top5_Winters_F, Top5_Sterpu_F)
-#stacks ranked ASV results from each study by row for maternal side samples
-Maternal_side_ASVs <- rbind(Top5_Winters_M, Top5_Sterpu_M)
-#adds rank within each study
-Fetal_side_ASVs$Rank <- rep(seq(1:(nrow(Fetal_side_ASVs)/length(unique(Fetal_side_ASVs$Study)))), length(unique(Fetal_side_ASVs$Study)))
-#adds rank within each study
-Maternal_side_ASVs$Rank <- rep(seq(1:(nrow(Maternal_side_ASVs)/length(unique(Maternal_side_ASVs$Study)))), length(unique(Maternal_side_ASVs$Study)))
-#aggregates genus classifications of ASVs by rank for fetal side samples
-pretable_fetal <- data.frame(ASV1 = Fetal_side_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Fetal_side_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Fetal_side_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Fetal_side_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Fetal_side_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-#aggregates genus classifications of ASVs by rank for maternal side samples
-pretable_maternal <- data.frame(ASV1 = Maternal_side_ASVs %>% filter(Rank == 1) %>% pull(Genus), ASV2 = Maternal_side_ASVs %>% filter(Rank == 2) %>% pull(Genus),ASV3 = Maternal_side_ASVs %>% filter(Rank == 3) %>% pull(Genus),ASV4 = Maternal_side_ASVs %>% filter(Rank == 4) %>% pull(Genus),ASV5 = Maternal_side_ASVs %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-#groups fetal and maternal side genus classifications
-Pretable <- rbind(c(rep("Fetal-side", 5)), pretable_fetal, c(rep("Maternal-side", 5)), pretable_maternal)
-
-#recodes placental samples by region for DECONTAM processed samples
-OlomuD_rare_META$Region <- "Fetal"
-#recodes placental samples by region for DECONTAM processed samples and filters metadata to cesarean delivered samples
-SterpuD_rare_META$Region <- SterpuD_rare_META$Level %>% recode(., "fetal" = "Fetal", "decidua" = "Maternal", "middle" = "Fetal"); SterpuD_rare_META_CS <- SterpuD_rare_META %>% filter(Delivery == "Cesarean")
-TheisD_rare_META$Region <- TheisD_rare_META$Level %>% recode(., "Amnion-Chorion" = "Fetal", "Villous Tree" = "Fetal")
-WintersD_rare_META$Region <- WintersD_rare_META$Level %>% recode(., "Amnion" = "Fetal", "Amnion-Chorion_Interface" = "Fetal", "Subchorionic_Plate_Swab" = "Fetal", "Villous Tree" = "Fetal", "Basal_Plate" = "Maternal")
-
-#returns top five ranked ASVs by study split by placental region after DECONTAM processing
-Top5_OlomuD_F <- top_ASVs_above_cutoff(ASV = OlomuD_rare_ASV, TAX = OlomuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Olomu")
-Top5_SterpuD_F <- top_ASVs_above_cutoff(ASV = SterpuD_rare_ASV %>% select_if(SterpuD_rare_META$Region == "Fetal" & SterpuD_rare_META$Delivery == "Cesarean"), TAX = SterpuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
-Top5_SterpuD_M <- top_ASVs_above_cutoff(ASV = SterpuD_rare_ASV %>% select_if(SterpuD_rare_META$Region == "Fetal" & SterpuD_rare_META$Delivery == "Cesarean"), TAX = SterpuD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Sterpu")
-Top5_TheisD_F <- top_ASVs_above_cutoff(ASV = TheisD_rare_ASV %>% select_if(TheisD_rare_META$Region == "Fetal"), TAX = TheisD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis")
-Top5_WintersD_F <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV %>% select_if(WintersD_rare_META$Delivery == "Cesarean" & WintersD_rare_META$GA == "Term" & WintersD_rare_META$Labor == "NIL" & WintersD_rare_META$Region == "Fetal"), TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
-Top5_WintersD_M <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV %>% select_if(WintersD_rare_META$Delivery == "Cesarean" & WintersD_rare_META$GA == "Term" & WintersD_rare_META$Labor == "NIL" & WintersD_rare_META$Region == "Maternal"), TAX = WintersD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
-
-#stacks ranked ASV results from each study by row for fetal side samples after DECONTAM processing
-fetal_side_ASVs_DECO <- rbind(Top5_OlomuD_F, Top5_TheisD_F, Top5_WintersD_F, Top5_SterpuD_F)
-#stacks ranked ASV results from each study by row for maternal side samples after DECONTAM processing
-maternal_side_ASVs_DECO <- rbind(Top5_WintersD_M, Top5_SterpuD_M)
-
-#initializes `ranks` object to hold ASV ranks based on the number of ASVs per study. 
-ranks <- c()
-#gets ranks by study
-for(i in 1:length(unique(fetal_side_ASVs_DECO$Study))){
-  ranks <- append(ranks, 1:sum(fetal_side_ASVs_DECO$Study == unique(fetal_side_ASVs_DECO$Study)[i]))
-}
-#stores `ranks` into a `Rank` column for fetal-side samples and re-initializes `ranks`
-fetal_side_ASVs_DECO$Rank <- ranks; ranks <- c()
-#gets ranks by study
-maternal_side_ASVs_DECO$Rank <- for(i in 1:length(unique(maternal_side_ASVs_DECO$Study))){
-  ranks <- append(ranks, 1:sum(maternal_side_ASVs_DECO$Study == unique(maternal_side_ASVs_DECO$Study)[i]))
-}
-#stores `ranks` into a `Rank` column for maternal-side samples and re-initializes `ranks`
-maternal_side_ASVs_DECO$Rank <- ranks
-
-#aggregates genus classifications of ASVs by rank for fetal side samples
-pretable_fetal_DECO <- data.frame(ASV1 = fetal_side_ASVs_DECO %>% filter(Rank == 1) %>% pull(Genus), ASV2 = fetal_side_ASVs_DECO %>% filter(Rank == 2) %>% pull(Genus),ASV3 = fetal_side_ASVs_DECO %>% filter(Rank == 3) %>% pull(Genus),ASV4 = fetal_side_ASVs_DECO %>% filter(Rank == 4) %>% pull(Genus),ASV5 = fetal_side_ASVs_DECO %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-#aggregates genus classifications of ASVs by rank for maternal side samples
-pretable_maternal_DECO <- data.frame(ASV1 = maternal_side_ASVs_DECO %>% filter(Rank == 1) %>% pull(Genus), ASV2 = maternal_side_ASVs_DECO %>% filter(Rank == 2) %>% pull(Genus),ASV3 = maternal_side_ASVs_DECO %>% filter(Rank == 3) %>% pull(Genus),ASV4 = maternal_side_ASVs_DECO %>% filter(Rank == 4) %>% pull(Genus),ASV5 = maternal_side_ASVs_DECO %>% filter(Rank == 5) %>% pull(Genus), stringsAsFactors = FALSE)
-#groups fetal and maternal side genus classifications after DECONTAM processing
-Pretable_DECO <- rbind(c(rep("Fetal-side", 5)), pretable_fetal_DECO, c(rep("Maternal-side", 5)), pretable_maternal_DECO)
-
-#metadata for table S2
-Table_S2_Meta <- data.frame(Study = c("Fetal-side","Olomu", "Theis", "Winters","Sterpu", "Maternal-side", "Winters", "Sterpu"), Hypervariable_Region = c("Fetal-side", rep("V4", 3), "V6-V8", "Maternal-side", rep("V4", 1), "V6-V8"))
-#combines genus classification data with metadata
-Table_S2 <- cbind(Table_S2_Meta, Pretable, Pretable_DECO)
-#removes all underscores
-Table_S2 <- apply(X = Table_S2, MARGIN = c(1,2), FUN = function(x) str_replace_all(x, pattern = "_", replacement = " ")); Table_S2 <- as.data.frame(Table_S2, stringsAsFactors = FALSE)
-#renames columns
-colnames(Table_S2) <- c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5", "DASV1", "DASV2", "DASV3", "DASV4", "DASV5")
-#generates dataframe for renaming header with key column: `col_keys`
-new_header <- data.frame(
-  col_keys = colnames(Table_S2), 
-  header_above = c("Study", "16S rRNA gene hypervariable region", rep("Before DECONTAM", 5), rep("After DECONTAM", 5)), 
-  header_below = c("Study", "16S rRNA gene hypervariable region","ASV1", "ASV2", "ASV3", "ASV4", "ASV5", "ASV1", "ASV2", "ASV3", "ASV4", "ASV5"),
-  stringsAsFactors = FALSE)
-#formats table as flextable
-ft_S2 <- flextable(Table_S2)
-
-#produces formatted table S2
-Table_S2_formatted <- ft_S2  %>% 
-                      style(j = c(3:12), pr_t = text_italic) %>% 
-                      style(~ ASV1 == "Lactobacillus" | ASV1 == "Lactobacillus*", j = 3, pr_t = text_bold_italic) %>% 
-                      style(~ ASV2 == "Lactobacillus" | ASV2 == "Lactobacillus*", j = 4, pr_t = text_bold_italic) %>% 
-                      style(~ ASV3 == "Lactobacillus" | ASV3 == "Lactobacillus*", j = 5, pr_t = text_bold_italic) %>% 
-                      style(~ ASV4 == "Lactobacillus" | ASV4 == "Lactobacillus*", j = 6, pr_t = text_bold_italic) %>% 
-                      style(~ ASV5 == "Lactobacillus" | ASV5 == "Lactobacillus*", j = 7, pr_t = text_bold_italic) %>% 
-                      style(~ DASV1 == "Lactobacillus" | DASV1 == "Lactobacillus*", j = 8, pr_t = text_bold_italic) %>% 
-                      style(~ DASV2 == "Lactobacillus" | DASV2 == "Lactobacillus*", j = 9, pr_t = text_bold_italic) %>% 
-                      style(~ DASV3 == "Lactobacillus" | DASV3 == "Lactobacillus*", j = 10, pr_t = text_bold_italic) %>% 
-                      style(~ DASV4 == "Lactobacillus" | DASV4 == "Lactobacillus*", j = 11, pr_t = text_bold_italic) %>% 
-                      style(~ DASV5 == "Lactobacillus" | DASV5 == "Lactobacillus*", j = 12, pr_t = text_bold_italic) %>% 
-                      merge_at(i = 1, j = 3:7) %>% 
-                      merge_at(i = 6, j = 3:7) %>% 
-                      merge_at(i = 1, j = 8:12) %>% 
-                      merge_at(i = 6, j = 8:12) %>% 
-                      style(i = c(1,6), pr_t = text_italic) %>% 
-                      flextable::compose(i = 1, j = 1:2, as_paragraph(as_chunk(' '))) %>% 
-                      flextable::compose(i = 6, j = 1:2, as_paragraph(as_chunk(' '))) %>% 
-                      footnote(i = c(1, 6),j = 3:12, value = as_paragraph(
-                          c("Samples labeled 'amnion', 'amnion-chorion', 'amnion-chorion interface', 'sub-chorionic plate swab', 'placental parenchyma', 'villous tree' or 'fetal' were categorized as placental samples from the fetal side.", 
-                            "Samples labeled 'decidua' or 'basal plate' were categorized as placental samples from the maternal side.")), ref_symbols = c("a", "b"), part = "body") %>% 
-                      set_header_df(mapping = new_header, key = "col_keys") %>% 
-                      merge_v(part = "header", j = c(1:2)) %>% 
-                      merge_h(part = "header", i = 1) %>% 
-                      theme_booktabs(bold_header = TRUE) %>% 
-                      align(align = "center", part = "all") %>% 
-                      hline(i = c(1,5,6), border = border_dark_grey) %>% 
-                      vline(j = c(2,7), border = border_dark_grey) %>% 
-                      footnote(value = as_paragraph(
-                         c("ASV1-5 are rank designations based on percent relative abundance.")), part = "header", ref_symbols = ""); Table_S2_formatted
-```
-
-## Table S3 {#TableS3}
+## Table S3 Statistics {#TableS3}
 
 Dispersion and clustering of placental samples compared to technical controls by level.
 
@@ -2908,34 +2590,4 @@ new_header <- data.frame(
   header_above = c("Study", "Level", rep("Dispersion", 2), rep("NPMANOVA", 3)),
   header_below = c("Study", "Level", "F Statistic", "P value", "R2", "F Statistic", "P Value"),
   stringsAsFactors = FALSE)
-
-#formats table as flextable
-ft_S3 <- flextable(Table_S3)
-#produces formatted Table S3
-Table_S3_formatted <- ft_S3 %>% 
-                      set_header_df(mapping = new_header, key = "col_keys") %>% 
-                      merge_h(part = "header", i = 1) %>% 
-                      flextable::compose(i= 2, j = 5, part = "header", value = as_paragraph("R", as_sup("2"))) %>% 
-                      theme_booktabs(bold_header = TRUE) %>% 
-                      align(align = "center", part = "all") %>% 
-                      style(~ Disp_P_Val < 0.05, j = 4, pr_t = text_bold) %>% 
-                      style(~ ADONIS_P_Val < 0.05, j = 7, pr_t = text_bold) %>% 
-                      flextable::compose(i = 1, j = 4, part = "body", value = as_paragraph("<0.001")) %>%
-                      flextable::compose(i = 1, j = 3, part = "body", value = as_paragraph("6590")) %>%
-                      merge_v(j=1, part = "body") %>% 
-                      merge_v(j=c(1,2), part = "header") %>%
-                      hline(i = c(1,4,5, 8, 10), border = border_dark_grey) %>% 
-                      vline(j=c(2,4), border = border_dark_grey) %>% 
-                      footnote(i = 6:8, j = 7, ref_symbols = c("1"), value = as_paragraph(
-  "ADONIS significance is likely to be due to differences in dispersion and unbalanced groups. Regardless, ", as_i("Staphylococcus"), " was predominant in samples responsible for significance.
-    ")) %>% 
-                      footnote(i = 10, j = 7, ref_symbols = c("2"), value = as_paragraph(
-  "Room samples (exposed to room air for 20 minutes), which were predominantly ", as_i("Delftia"), ", ", as_i("Blastomonas"), ", and ", as_i("Achromobacter"), ", from the Theis et al. dataset were responsible for ADONIS significance, which disappeared after their removal.
-    ")) %>% 
-                      footnote(i = c(11,15), j = 7, ref_symbols = c("3"), value = as_paragraph(
-  "Amnion and Basal Plate samples driving significance were characterized by ", as_i("Staphylococcus"), ", ", as_i("Corynebacterium"), ", ", as_i("Serratia*"), ", and ", as_i("Cupriavidus"), "."))
-#allows table to be adjusted based on viewing window size and fixes border issue
-Table_S3_formatted <- autofit(Table_S3_formatted) %>% 
-                      fix_border_issues() %>% 
-                      width(., j = c(5,7), width = .8); Table_S3_formatted
 ```
