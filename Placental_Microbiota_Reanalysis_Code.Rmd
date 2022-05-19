@@ -1,7 +1,7 @@
 ---
 title: "R Markdown: IS THERE A PLACENTAL MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL MICROBIOTA DATASETS"
 author: "Jonathan Panzer"
-date: "March 22nd, 2022"
+date: "May 19th, 2022"
 output:
   html_document:
     toc: true
@@ -25,7 +25,7 @@ knitr::opts_chunk$set(echo = TRUE)
     * [Olomu et al. setup](#OlomuSetup)
     * [Seferovic et al. setup](#SeferovicSetup)
     * [Theis et al. setup](#TheisSetup)
-    * [Winters et al. setup](#WintersSetup)
+    * [Theis_Winters et al. setup](#Theis_WintersSetup)
     * [Younge et al. setup](#YoungeSetup)
     * [V4 Subset merging](#V4merger)
     * [V4 Normalization](#V4normalization)
@@ -109,12 +109,12 @@ knitr::opts_chunk$set(echo = TRUE)
       * [Theis et al. normalization](#TheisNormalization)
       * [Theis et al. post-normalization subsets](#TheisPostNSubsets)
       * [Theis et al. PCoAs](#TheisPCoAs)
-    * [Winters et al. analysis](#WintersAnalysis)
-      * [Winters et al. data cleaning](#WintersAdtnlCleaning)
-      * [Winters et al. DECONTAM](#WintersDECONTAM)
-      * [Winters et al. normalization](#WintersNormalization)
-      * [Winters et al. post-normalization subsets](#WintersPostNSubsets)
-      * [Winters et al. PCoA](#WintersPCoA)
+    * [Theis_Winters et al. analysis](#Theis_WintersAnalysis)
+      * [Theis_Winters et al. data cleaning](#Theis_WintersAdtnlCleaning)
+      * [Theis_Winters et al. DECONTAM](#Theis_WintersDECONTAM)
+      * [Theis_Winters et al. normalization](#Theis_WintersNormalization)
+      * [Theis_Winters et al. post-normalization subsets](#Theis_WintersPostNSubsets)
+      * [Theis_Winters et al. PCoA](#Theis_WintersPCoA)
     * [Younge et al. analysis](#YoungeAnalysis)
       * [Younge et al. additional data cleaning](#YoungeAdtnlCleaning)
       * [Younge et al. normalization](#YoungeNormalization)
@@ -225,10 +225,6 @@ devtools::install_version("circlize", version = "0.4.10")
 devtools::install_version("seqinr", version = "4.2.4")
 #installs pairwiseAdonis version 0.4
 devtools::install_github("pmartinezarbizu/pairwiseAdonis/pairwiseAdonis")
-#installs officer version earlier than 0.4.0
-devtools::install_version("officer", version = "0.3.19")
-#installs flextable version earlier than 0.6.9
-devtools::install_version("flextable", version = "0.6.5")
 #installs gifski version 0.8.3
 devtools::install_version("gifski", version = "0.8.3")
 #installs pdftools version 2.2
@@ -260,8 +256,6 @@ library(knitr)
 library(circlize)
 library(seqinr)
 library(pairwiseAdonis)
-library(flextable)
-library(officer)
 
 #also need to install dada2tools from github.
 if (!requireNamespace("dada2tools", quietly = TRUE)){
@@ -288,7 +282,7 @@ Leiby_merged <- read.csv("Leiby_merged.csv", stringsAsFactors = FALSE)
 Olomu_merged <- read.csv("Olomu_merged.csv", stringsAsFactors = FALSE)
 Parnell_merged <- read.csv("Parnell_merged.csv", stringsAsFactors = FALSE)
 Theis_merged <- read.csv("Theis_merged.csv", stringsAsFactors = FALSE)
-Winters_merged <- read.csv("Winters_merged.csv", stringsAsFactors = FALSE)
+Theis_Winters_merged <- read.csv("Theis_Winters_merged.csv", stringsAsFactors = FALSE)
 Sterpu_merged <- read.csv("Sterpu_merged.csv", stringsAsFactors = FALSE)
 Dinsdale_merged <- read.csv("Dinsdale_merged.csv", stringsAsFactors = FALSE)
 Tang_merged <- read.csv("Tang_merged.csv", stringsAsFactors = FALSE)
@@ -306,7 +300,7 @@ High_Quality_Samples <- list(
     Olomu = colnames(Olomu_merged)[9:ncol(Olomu_merged)], 
     Parnell = colnames(Parnell_merged)[9:ncol(Parnell_merged)],
     Theis = colnames(Theis_merged)[9:ncol(Theis_merged)], 
-    Winters = colnames(Winters_merged)[9:ncol(Winters_merged)], 
+    Theis_Winters = colnames(Theis_Winters_merged)[9:ncol(Theis_Winters_merged)], 
     Sterpu = colnames(Sterpu_merged)[9:ncol(Sterpu_merged)], 
     Dinsdale = colnames(Dinsdale_merged)[9:ncol(Dinsdale_merged)], 
     Tang = colnames(Tang_merged)[9:ncol(Tang_merged)], 
@@ -321,7 +315,7 @@ High_Quality_Samples <- list(
 
 # 16S rRNA hypervariable region V4 subset analysis {#V4Subset}
 
-This begins the portion of code used to generate figures 5 and 6. For each of the six studies, the DADA2 analyzed sequence data, which is stored in a `Study_Name_merged.csv` file, was cleaned (e.g., mitochondrial, chloroplast, and reads unclassified at the phylum level or above were removed from the dataset. In addition, samples with less than 100 reads after the prior read removal were removed. For the exact cleaning process, the code for the function `dadaset_clean()` can be viewed by typing the function `dadaset_clean` without parentheses and pressing enter). In addition, publicly available metadata for each study, usually a `Study_Name_SraRunTable.csv`, was stored. ASVs not classified at the genus level in tables and figures were compared to bacterial type strains in the NCBI BLAST sequence database. Sequences were reclassified to the genus level with the highest percent identity greater than 95%.
+This begins the portion of code used to generate figures 5 and 6. For each of the six studies, the DADA2 analyzed sequence data, which is stored in a `Study_Name_merged.csv` file, was cleaned (e.g., mitochondrial, chloroplast, and reads unclassified at the phylum level or above were removed from the dataset. In addition, samples with less than 100 reads after the prior read removal were removed. For the exact cleaning process, the code for the function `dadaset_clean()` can be viewed by typing the function `dadaset_clean` without parentheses and pressing enter. In addition, publicly available metadata for each study, usually a `Study_Name_SraRunTable.csv`, was stored. ASVs not classified at the genus level in tables and figures were compared to bacterial type strains in the NCBI BLAST sequence database. Sequences were reclassified to the genus level with the highest percent identity greater than 95%.
 
 ### Dinsdale et al. setup {#DinsdaleSetup}
 
@@ -338,11 +332,16 @@ Dinsdale_meta <- read.csv(file = "Dinsdale_SraRunTable.csv", stringsAsFactors = 
 Dinsdale_meta_select <- Dinsdale_meta %>% select_if(colnames(.) %in% c("Run", "Sample_name", "title")); colnames(Dinsdale_meta_select) <- c("Run", "Sample", "Type")
 
 #cleans sequence data and renames rows with numbered ASVs
-Dinsdale_merged_clean <- dadaset_clean(Dinsdale_merged, read_thresh = 100);rownames(Dinsdale_merged_clean) <- paste0("ASV", 1:nrow(Dinsdale_merged_clean))
+Dinsdale_merged_clean <- dadaset_clean(Dinsdale_merged, read_thresh = 100)
+rownames(Dinsdale_merged_clean) <- paste0("ASV", 1:nrow(Dinsdale_merged_clean))
 
 #splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
 Dinsdale_ASV <- Dinsdale_merged_clean[,9:159]
-Dinsdale_TAX <- data.frame(ASV = rownames(Dinsdale_merged_clean), Dinsdale_merged_clean[,1:8], row.names = rownames(Dinsdale_merged_clean), stringsAsFactors = FALSE)
+Dinsdale_TAX <- data.frame(
+  ASV = rownames(Dinsdale_merged_clean), 
+  Dinsdale_merged_clean[,1:8], 
+  row.names = rownames(Dinsdale_merged_clean), 
+  stringsAsFactors = FALSE)
 
 #filters metadata to samples which passed the 100 read cutoff
 Dinsdale_META <- Dinsdale_meta_select %>% filter(Dinsdale_meta_select$Run %in% colnames(Dinsdale_ASV))
@@ -359,7 +358,8 @@ for (i in 1:length(Dinsdale_META$Type)){
 }
 Dinsdale_META$Type <- Dinsdale_META$Type %>% recode(., "NEG" = "Technical Control", "Vagina" = "Vaginal Swab")
 #Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names.
-Dinsdale_META$Reads <- unlist(colSums(Dinsdale_ASV));Dinsdale_META$Study <- "Dinsdale"; rownames(Dinsdale_META) <- Dinsdale_META$Sample
+Dinsdale_META$Reads <- unlist(colSums(Dinsdale_ASV));Dinsdale_META$Study <- "Dinsdale"
+rownames(Dinsdale_META) <- Dinsdale_META$Sample
 
 #Reclassifying ASV10 since its sequence shares 96.44% similarity to type strains in the genus Phenylobacterium
 Dinsdale_TAX$Genus[10] <- "Phenylobacterium*"
@@ -509,53 +509,54 @@ for (i in 1:length(Theis_META$Run)){
 Theis_META$Reads <- unlist(colSums(Theis_ASV)); Theis_META$Study <- "Theis"; rownames(Theis_META) <- Theis_META$Sample
 ```
 
-### Winters et al. setup {#WintersSetup}
+### Theis, Winters et al. setup {#Theis_WintersSetup}
 
 The following chunk processes the Winters et al. dataset similarly to the previous chunk.
 
-```{r V4_Setup_Winters}
+```{r V4_Setup_Theis_Winters}
 
 #preparing Winters et al. for inclusion in the V4 Subset
 #Loads both sequence and metadata. `Key` correlates run numbers with sample names
-Winters_merged <- read.csv("Winters_merged.csv", stringsAsFactors = FALSE)
-Winters_meta <- read.csv("Winters_meta.csv", header = TRUE, stringsAsFactors = FALSE)
-key <- read.xlsx("Winters_SRRkey_metadata.xlsx")
+Theis_Winters_merged <- read.csv("Theis_Winters_merged.csv", stringsAsFactors = FALSE)
+Theis_Winters_meta <- read.csv("Theis_Winters_meta.csv", header = TRUE, stringsAsFactors = FALSE)
+key <- read.xlsx("Theis_Winters_SRRkey_metadata.xlsx")
 
 #Adds an `S` to entries in `Winters_meta` Sample column which start with a digit
-for(i in 1:nrow(Winters_meta)){
-    if(str_detect(string = Winters_meta$Sample[i], pattern = "\\b\\d+") == TRUE){
-        Winters_meta$Sample[i] <- paste0("S", Winters_meta$Sample[i])
+for(i in 1:nrow(Theis_Winters_meta)){
+    if(str_detect(string = Theis_Winters_meta$Sample[i], pattern = "\\b\\d+") == TRUE){
+        Theis_Winters_meta$Sample[i] <- paste0("S", Theis_Winters_meta$Sample[i])
     }
 }
 
 #merges key with metadata by sample names, then reorders metadata
-Winters_meta <- merge(Winters_meta, key[,1:2], by = "Sample"); Winters_meta <- Winters_meta[,c(10,1:9)]
+Theis_Winters_meta <- merge(Theis_Winters_meta, key[,1:2], by = "Sample")
+Theis_Winters_meta <- Theis_Winters_meta[,c(10,1:9)]
 
 #subsets to high quality samples
-Winters_merged <- cbind(Winters_merged[,1:8], Winters_merged %>% select_if(colnames(.) %in% Winters_meta$Sample))
+Theis_Winters_merged <- cbind(Theis_Winters_merged[,1:8], Theis_Winters_merged %>% select_if(colnames(.) %in% Theis_Winters_meta$Sample))
 
 #cleans sequence data and renames rows with numbered ASVs
-Winters_merged_clean <- dadaset_clean(Winters_merged, read_thresh = 100); rownames(Winters_merged_clean) <- paste0("ASV", 1:nrow(Winters_merged_clean))
+Theis_Winters_merged_clean <- dadaset_clean(Theis_Winters_merged, read_thresh = 100); rownames(Theis_Winters_merged_clean) <- paste0("ASV", 1:nrow(Theis_Winters_merged_clean))
 
 #subsets to samples left after cleaning data and reorders metadata according to column names in merged data
-Winters_META <- Winters_meta %>% filter(Sample %in% colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)])
-Winters_META <- Winters_META[match(x = colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)], table = Winters_META$Sample),]
+Theis_Winters_META <- Theis_Winters_meta %>% filter(Sample %in% colnames(Theis_Winters_merged_clean)[9:ncol(Theis_Winters_merged_clean)])
+Theis_Winters_META <- Theis_Winters_META[match(x = colnames(Theis_Winters_merged_clean)[9:ncol(Theis_Winters_merged_clean)], table = Theis_Winters_META$Sample),]
 #Blank samples do not have gestational age or delivery data
-Winters_META[450:461,7:8] <- NA
+Theis_Winters_META[450:461,7:8] <- NA
 
 #renames columns as sample run number
-colnames(Winters_merged_clean)[9:ncol(Winters_merged_clean)] <- Winters_META$Run
+colnames(Theis_Winters_merged_clean)[9:ncol(Theis_Winters_merged_clean)] <- Theis_Winters_META$Run
 
 #splits merged sequence data into an `ASV` count table and a taxonomy `TAX` object. In order to merge the studies later on, the `TAX` object needs to have an ASV column with numbered ASVs.
-Winters_ASV <- Winters_merged_clean[,9:ncol(Winters_merged_clean)]
-Winters_TAX <- data.frame(ASV = rownames(Winters_merged_clean), Winters_merged_clean[,1:8], row.names = rownames(Winters_merged_clean), stringsAsFactors = FALSE)
+Theis_Winters_ASV <- Theis_Winters_merged_clean[,9:ncol(Theis_Winters_merged_clean)]
+Theis_Winters_TAX <- data.frame(ASV = rownames(Theis_Winters_merged_clean), Theis_Winters_merged_clean[,1:8], row.names = rownames(Theis_Winters_merged_clean), stringsAsFactors = FALSE)
 
 #recodes names for sample types, gestational age and delivery metadata for placental samples, and technical controls. 
-Winters_META$Type <- c(rep("Placenta", (nrow(Winters_META)-12)), rep("Technical Control", 12))
-Winters_META$Delivery <- Winters_META$Delivery %>% recode(., "CS" = "Cesarean")
+Theis_Winters_META$Type <- c(rep("Placenta", (nrow(Theis_Winters_META)-12)), rep("Technical Control", 12))
+Theis_Winters_META$Delivery <- Theis_Winters_META$Delivery %>% recode(., "CS" = "Cesarean")
 
 #Adds a `Reads` (total reads per sample), `Study` column, and gives metadata rows sample names. Finally reorders metadata to match for future combination.
-Winters_META$Reads <- unlist(colSums(Winters_ASV)); Winters_META$Study <- "Winters"; rownames(Winters_META) <- Winters_META$Sample; Winters_META <- Winters_META[,c(1,2,11,7:8,12:13)]
+Theis_Winters_META$Reads <- unlist(colSums(Theis_Winters_ASV)); Theis_Winters_META$Study <- "Theis_Winters"; rownames(Theis_Winters_META) <- Theis_Winters_META$Sample; Theis_Winters_META <- Theis_Winters_META[,c(1,2,11,7:8,12:13)]
 ```
 
 ### Younge et al. setup {#YoungeSetup}
@@ -608,7 +609,7 @@ Now that all six studies are loaded into the R environment, we can merge the dat
 ```{r Combination_of_V4_Studies}
 
 #combines all six studies
-V4_Combo_S6 <- combine_V4(ASV_datasets = list(Dinsdale_ASV, Olomu_ASV, Seferovic_ASV, Theis_ASV, Winters_ASV, Younge_ASV), TAX_datasets = list(Dinsdale_TAX,  Olomu_TAX, Seferovic_TAX, Theis_TAX, Winters_TAX, Younge_TAX), META_datasets = list(Dinsdale_META, Olomu_META, Seferovic_META, Theis_META, Winters_META,Younge_META))
+V4_Combo_S6 <- combine_V4(ASV_datasets = list(Dinsdale_ASV, Olomu_ASV, Seferovic_ASV, Theis_ASV, Theis_Winters_ASV, Younge_ASV), TAX_datasets = list(Dinsdale_TAX,  Olomu_TAX, Seferovic_TAX, Theis_TAX, Theis_Winters_TAX, Younge_TAX), META_datasets = list(Dinsdale_META, Olomu_META, Seferovic_META, Theis_META, Theis_Winters_META,Younge_META))
 
 #splits object into ASV, TAX, and META parts
 V4_S6_ASV <- V4_Combo_S6$ASV; V4_S6_TAX <- V4_Combo_S6$TAX; V4_S6_META <- V4_Combo_S6$META
@@ -677,7 +678,7 @@ V4_TAX_T <- V4_rare_TAX %>% filter(rownames(.) %in% rownames(V4_ASV_T))
 
 ## V4 PCoA plots (Figure 5) {#V4PCoAs}
 
-At this point we can evaluate clustering through Principle Coordinates Analysis plots. This code produces Figure 5A, 5B, and 5C. The positions of legends and ASV labels were adjusted in Inkscape for clarity. Samples from the Winters dataset were sent to the bottom layer for easy visualization of samples from the other studies.
+At this point we can evaluate clustering through Principle Coordinates Analysis plots. This code produces Figure 5A, 5B, and 5C. The positions of legends and ASV labels were adjusted in Inkscape for clarity. Samples from the Theis, Winters et al. dataset were sent to the bottom layer for easy visualization of samples from the other studies.
 
 ```{r V4_PCoA_Plots}
 
@@ -722,9 +723,9 @@ disp_V4_T_study <- anova(betadisper(d = vegdist(t(V4_ASV_T), method = "bray"), g
 set.seed(1); adonis_V4_T_study <- adonis2(formula = t(V4_ASV_T) ~ Study, data = V4_META_T, permutations = 999, method = "bray")
 
 #sets the palette for plotting
-palette(c("black", "#DF536B", "#61D04F", "#e6e6e6", "#28E2E5",  "#CD0BBC"))
-#plots PCoA of placental samples grouped by mode of delivery and gestational age
-S6_Beta_Plot_P_Del_GA <- beta_div(df = V4_ASV_P, df_meta = V4_META_P, taxa_on_rows = TRUE, type = "Del_GA", all_O = TRUE, study = "V4 Placental Samples PCoA by Study", legendyn = TRUE, inset = 0.2, Legend_Yspace = .25)
+palette(c("#28E2E5", "#e6e6e6", "#CD0BBC"))
+#plots PCoA of placental samples grouped by mode of delivery
+S6_Beta_Plot_P_Del <- beta_div(df = V4_ASV_P, df_meta = V4_META_P, taxa_on_rows = TRUE, type = "Delivery", all_O = TRUE, study = "V4 Placental Samples PCoA by Study", legendyn = TRUE, inset = 0.2, Legend_Yspace = .25)
 #characterizes ordination space with ASV genus level classifications
 WA_labels(Plot_object = S6_Beta_Plot_P, ASV_table = V4_ASV_P, TAX_table = V4_TAX_P, ASVs_on_rows = TRUE, ASV_with_Genus = TRUE, color = "grey", Greater_than_1per = TRUE)
 
@@ -736,9 +737,6 @@ disp_V4P_del <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), grou
 #all pairwise comparsions significantly different
 set.seed(1); adonis_pw_V4P_del <- pairwise.adonis2(x = t(V4_ASV_P) ~ Delivery, data = V4_META_P)
 
-#performs pairwise analysis of variance between sample types (gestational age) using ADONIS (NPMANOVA).
-#all pairwise comparsions significantly different
-set.seed(1); adonis_pw_V4P_ga <- pairwise.adonis2(x = t(V4_ASV_P) ~ GA, data = V4_META_P)
 ```
 
 ## V4 Heatmaps by Study (Figure 6) {#V4Heatmaps}
@@ -780,19 +778,19 @@ V4_Theis_ASVs <- top_ASVs_above_cutoff(ASV = V4_Theis_ASV %>% select_if(V4_Theis
 V4_Theis_heatprep <- heatmap_prep(df = V4_Theis_ASV, df_tax = V4_Theis_TAX, df_meta = V4_Theis_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Theis_ASVs$ASV)
 heatmapping(df = V4_Theis_heatprep, df_meta = V4_Theis_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Theis")
 
-V4_Winters_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Winters") %>% filter(rowSums(.) > 0)
-V4_Winters_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Winters_ASV))
-V4_Winters_META <- V4_META_PTC %>% filter(Study == "Winters")
-V4_Winters_ASVs <- top_ASVs_above_cutoff(ASV = V4_Winters_ASV %>% select_if(V4_Winters_META$Type == "Placenta"), TAX = V4_Winters_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Winters")
-V4_Winters_heatprep <- heatmap_prep(df = V4_Winters_ASV, df_tax = V4_Winters_TAX, df_meta = V4_Winters_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Winters_ASVs$ASV)
-heatmapping(df = V4_Winters_heatprep, df_meta = V4_Winters_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Winters")
+V4_Theis_Winters_ASV <- V4_ASV_PTC %>% select_if(V4_META_PTC$Study == "Theis_Winters") %>% filter(rowSums(.) > 0)
+V4_Theis_Winters_TAX <- V4_TAX_PTC %>% filter(rownames(.) %in% rownames(V4_Theis_Winters_ASV))
+V4_Theis_Winters_META <- V4_META_PTC %>% filter(Study == "Theis_Winters")
+V4_Theis_Winters_ASVs <- top_ASVs_above_cutoff(ASV = V4_Theis_Winters_ASV %>% select_if(V4_Theis_Winters_META$Type == "Placenta"), TAX = V4_Theis_Winters_TAX, cutoff = .02, top = 100, ASVs_on_Rows = TRUE, study = "Theis_Winters")
+V4_Theis_Winters_heatprep <- heatmap_prep(df = V4_Theis_Winters_ASV, df_tax = V4_Theis_Winters_TAX, df_meta = V4_Theis_Winters_META, class_col = "Genus", mean_ab_cutoff = FALSE, select_ASVs = V4_Theis_Winters_ASVs$ASV)
+heatmapping(df = V4_Theis_Winters_heatprep, df_meta = V4_Theis_Winters_META, types_col = "Type", scalecolor = "red-blue", title = "V4 Theis, Winters et al.")
 
 #lists ASVs greater than 1% mean relative abundance in technical controls from each study
 #ASVs in heatmaps are modified in Inkscape with a red asterisk if greater than 2% mean relative abundance in placental samples and greater than 1% mean relative abundance in technical controls.
 #Sample type titles are replaced in Inkscape with colored bars
 V4_Studies_TC1_ASVs <- rbind(
   top_ASVs_above_cutoff(ASV = V4_Dinsdale_ASV %>% select_if(V4_Dinsdale_META$Type == "Technical Control"), TAX = V4_Dinsdale_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Dinsdale"), 
-  top_ASVs_above_cutoff(ASV = V4_Winters_ASV %>% select_if(V4_Winters_META$Type == "Technical Control"), TAX = V4_Winters_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Winters"), 
+  top_ASVs_above_cutoff(ASV = V4_Theis_Winters_ASV %>% select_if(V4_Theis_Winters_META$Type == "Technical Control"), TAX = V4_Theis_Winters_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Theis_Winters"), 
   top_ASVs_above_cutoff(ASV = V4_Olomu_ASV %>% select_if(V4_Olomu_META$Type == "Technical Control"), TAX = V4_Olomu_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Olomu"), 
   top_ASVs_above_cutoff(ASV = V4_Seferovic_ASV %>% select_if(V4_Seferovic_META$Type == "Technical Control"), TAX = V4_Seferovic_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Seferovic"), 
   top_ASVs_above_cutoff(ASV = V4_Theis_ASV %>% select_if(V4_Theis_META$Type == "Technical Control"), TAX = V4_Theis_TAX, cutoff = .01, ASVs_on_Rows = TRUE, study = "Theis")
@@ -834,7 +832,7 @@ Tang - Paper lists accession as SRA958249 but actual accession is listed in the 
 ```{r Study_Specific_Changes}
 
 #creates data frame which tabulates all the study specific changes to the DADA2 processing pipeline
-Study_changes <- data.frame(deGoffau = c("_1.fastq", "_2.fastq", "(245,235)", "independent", "324:362"), Dinsdale = c("_1.fastq", "_2.fastq", "(230,215)", "pooled", "252:276"), `Gomez-Arango` = c(".fastq", NA, "230", "pooled", "229:231"), Lauder = c(".fastq", NA, "320", "pooled", NA), Leiby = c("_1.fastq", "_2.fastq", "(200,170)", "pooled", "298:332"), Leon = c(".fastq", NA, "360", "pooled", NA), Liu = c("_1.fastq", "_2.fastq", "(270,200)", "pooled", "398:414"), Olomu = c("_1.fastq", "_2.fastq", "(235:220)", "pooled", "252:287"), Parnell = c("_1.fastq", "_2.fastq", "(145,140)", "pooled", "164:190"), Seferovic = c("_1.fastq", "_2.fastq", "(245,230)", "pooled", "267:308"), Sterpu = c("_1.fastq", "_2.fastq", "(270,240)", "pooled", "430:440"), Tang = c("_1.fastq", "_2.fastq", "(290,250)", "pooled", "440:471"), Theis = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "252:272"), Younge = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "251:272"), Winters = c("_R1.fastq", "_R2.fastq", "(210, 100)", "pooled", "252:254"), row.names = c("Forward File Pattern", "Reverse File Pattern", "Truncation Lengths (F,R)", "DADA2 Method", "Merged Read Cutoffs (min:max)"))
+Study_changes <- data.frame(deGoffau = c("_1.fastq", "_2.fastq", "(245,235)", "independent", "324:362"), Dinsdale = c("_1.fastq", "_2.fastq", "(230,215)", "pooled", "252:276"), `Gomez-Arango` = c(".fastq", NA, "230", "pooled", "229:231"), Lauder = c(".fastq", NA, "320", "pooled", NA), Leiby = c("_1.fastq", "_2.fastq", "(200,170)", "pooled", "298:332"), Leon = c(".fastq", NA, "360", "pooled", NA), Liu = c("_1.fastq", "_2.fastq", "(270,200)", "pooled", "398:414"), Olomu = c("_1.fastq", "_2.fastq", "(235:220)", "pooled", "252:287"), Parnell = c("_1.fastq", "_2.fastq", "(145,140)", "pooled", "164:190"), Seferovic = c("_1.fastq", "_2.fastq", "(245,230)", "pooled", "267:308"), Sterpu = c("_1.fastq", "_2.fastq", "(270,240)", "pooled", "430:440"), Tang = c("_1.fastq", "_2.fastq", "(290,250)", "pooled", "440:471"), Theis = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "252:272"), Younge = c("_1.fastq", "_2.fastq", "(240,200)", "pooled", "251:272"), Theis_Winters = c("_R1.fastq", "_R2.fastq", "(210, 100)", "pooled", "252:254"), row.names = c("Forward File Pattern", "Reverse File Pattern", "Truncation Lengths (F,R)", "DADA2 Method", "Merged Read Cutoffs (min:max)"))
 
 #creates dataframe with study data
 Study_table <- data.frame(deGoffau = c("ERP109246"), Dinsdale = c("PRJEB39698"), `Gomez-Arango` = c("PRJNA357524"), Lauder = c("PRJNA309332"), Leiby = c("PRJNA451186"), Leon = c("PRJEB25986"), Liu = c("PRJNA559967"), Olomu = c("PRJNA577959"), Parnell = c("PRJNA395716"), Seferovic = c("PRJNA511648"), Sterpu = c("PRJEB38528"), Tang = c("PRJNA564455"), Theis = c("PRJNA397876"), Younge = c("PRJNA557826"), row.names = c("Project Number"))
@@ -2304,123 +2302,123 @@ Theis_topASVs <- rowSums(Theis_rare_ASV) %>% sort(., decreasing = TRUE) %>% head
 WA_labels(Plot_object = Theis_Beta_plot_PTCWA, ASV_table = Theis_rare_ASV, TAX_table = Theis_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Theis_topASVs))
 ```
 
-## Winters et al. analysis {#WintersAnalysis}
+## Theis, Winters et al. analysis {#Theis_WintersAnalysis}
 
-### Winters et al. additional data cleaning {#WintersAdtnlCleaning}
+### Theis, Winters et al. additional data cleaning {#Theis_WintersAdtnlCleaning}
 
 Data was already filtered and cleaned in V4 subset section.
 
-```{r Winters_Data_Cleaning}
+```{r Theis_Winters_Data_Cleaning}
 
-#Reclassifies ASV2740 Enterobacterales (Winters) which shares 100% identity to type strain Serratia marcescens ATCC 13880. The sequence also shares 100% identity to type strain Bacillus sonorensis NBRC 101234, but this type strain only shares 80% identity with other Bacillus sonorensis type strains and is likely misclassified.
-Winters_TAX$Genus[2740] <- "Serratia*"
+#Reclassifies ASV2740 Enterobacterales (Theis, Winters et al.) which shares 100% identity to multiple Serratia type strains.
+Theis_Winters_TAX$Genus[2740] <- "Serratia*"
 
 #removes ASV column
-Winters_TAX <- Winters_TAX[,-1]
+Theis_Winters_TAX <- Theis_Winters_TAX[,-1]
 
 #adds labor metadata
 #filters metadata to samples in `Winters_META`
-Winters_meta <- Winters_meta %>% filter(Run %in% Winters_META$Run)
+Theis_Winters_meta <- Theis_Winters_meta %>% filter(Run %in% Theis_Winters_META$Run)
 #orders metadata by `Run` column in `Winters_META`
-Winters_meta <- Winters_meta[match(x = Winters_META$Run, table = Winters_meta$Run),]
-Winters_META <- cbind(Winters_META, data.frame(Labor = Winters_meta$Labor))
+Theis_Winters_meta <- Theis_Winters_meta[match(x = Theis_Winters_META$Run, table = Theis_Winters_meta$Run),]
+Theis_Winters_META <- cbind(Theis_Winters_META, data.frame(Labor = Theis_Winters_meta$Labor))
 
 #adds `Level` metadata
-Winters_META$Level <- Winters_meta$Level
+Theis_Winters_META$Level <- Theis_Winters_meta$Level
 #recodes `Level` metadata
-Winters_META$Level <- Winters_META$Level %>% recode(., "Hood" = "Technical Control", "BLK" = "Technical Control")
+Theis_Winters_META$Level <- Theis_Winters_META$Level %>% recode(., "Hood" = "Technical Control", "BLK" = "Technical Control")
 ```
 
-### Winters et al. DECONTAM {#WintersDECONTAM}
+### Theis, Winters et al. DECONTAM {#Theis_WintersDECONTAM}
 
 Removes likely contaminants.
 
-```{r Winters_DECONTAM}
+```{r Theis_Winters_DECONTAM}
 
 #DECONTAM requires a column indicating which samples are to be considered samples and which are controls
-Winters_META$Deco_type <- case_when(Winters_META$Type == "Placenta" ~ "sample", Winters_META$Type == "Technical Control" ~ "control")
+Theis_Winters_META$Deco_type <- case_when(Theis_Winters_META$Type == "Placenta" ~ "sample", Theis_Winters_META$Type == "Technical Control" ~ "control")
 #prepares data for DECONTAM
-Winters_DECO_prep <- decontam_prep(df = cbind(Winters_TAX, Winters_ASV), meta = Winters_META, type = "Deco_type", sample_col = "Run")
+Theis_Winters_DECO_prep <- decontam_prep(df = cbind(Theis_Winters_TAX, Theis_Winters_ASV), meta = Theis_Winters_META, type = "Deco_type", sample_col = "Run")
 #generates histogram and prevalence plots comparing ASVs by prevalence in samples vs. controls
-DECO_plots_Winters <- decontam_histo_prev_plots(physeq = Winters_DECO_prep, thresh = 0.19, study_name = "Winters")
+DECO_plots_Theis_Winters <- decontam_histo_prev_plots(physeq = Theis_Winters_DECO_prep, thresh = 0.19, study_name = "Theis_Winters")
 #removes likely contaminants with a threshold of 0.19
-Winters_decontaminated <- decontaminate(df = cbind(Winters_TAX, Winters_ASV), physeq = Winters_DECO_prep, thresh = 0.19)
+Theis_Winters_decontaminated <- decontaminate(df = cbind(Theis_Winters_TAX, Theis_Winters_ASV), physeq = Theis_Winters_DECO_prep, thresh = 0.19)
 #returns taxa considered to be truly in the sample
-Winters_true_taxa <- Winters_decontaminated$TrueTaxa
+Theis_Winters_true_taxa <- Theis_Winters_decontaminated$TrueTaxa
 ```
 
-### Winters et al. normalization {#WintersNormalization}
+### Theis, Winters et al. normalization {#Theis_WintersNormalization}
 
-```{r Winters_Normalization}
+```{r Theis_Winters_Normalization}
 
 #pre-DECONTAM dataset normalization
 #visualization of sampling depth variance across dataset
-table(colSums(Winters_ASV))
+table(colSums(Theis_Winters_ASV))
 #converts dataset to phyloseq object
-phy <- phyloseqize(merged_df = Winters_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Winters_TAX)
+phy <- phyloseqize(merged_df = Theis_Winters_ASV, taxa_as_rows = TRUE, keep_ASV_nums = TRUE, tax_df = Theis_Winters_TAX)
 #normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than the minimum number of sequences at this point are removed.
 rarefied <- rarefy_even_depth(phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
 #converts phyloseq object back to merged data frame
 merged_rare <- dephy(rarefied)
 #splits dataframe into `ASV` count table, `TAX` taxonomy, and ensures that metadata is current with remaining samples.
-Winters_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Winters_rare_META <- Winters_META %>% filter(Run %in% colnames(Winters_rare_ASV)); Winters_rare_TAX <- merged_rare[,1:8]
+Theis_Winters_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Theis_Winters_rare_META <- Theis_Winters_META %>% filter(Run %in% colnames(Theis_Winters_rare_ASV)); Theis_Winters_rare_TAX <- merged_rare[,1:8]
 
 #post-DECONTAM normalization
 #visualization of sampling depth variance across dataset
-table(colSums(Winters_true_taxa[,9:ncol(Winters_true_taxa)]))
+table(colSums(Theis_Winters_true_taxa[,9:ncol(Theis_Winters_true_taxa)]))
 #converts dataset to phyloseq object
-phy <- phyloseqize(Winters_true_taxa)
+phy <- phyloseqize(Theis_Winters_true_taxa)
 #normalizes samples to the greater of either the minimum number of sequences per sample in a dataset or 100. Samples with less than 100 sequences at this point are removed.
 rarefied <- rarefy_even_depth(physeq = phy, sample.size = max(min(sample_sums(phy)), 100), rngseed = 1, replace = FALSE)
 #converts phyloseq object back to merged data frame
 merged_rare <- dephy(rarefied)
 ```
 
-### Winters et al. post-normalization subsets {#WintersPostNSubsets}
+### Theis, Winters et al. post-normalization subsets {#Theis_WintersPostNSubsets}
 
-```{r Winters_post-Normalization_Subsets}
+```{r Theis_Winters_post-Normalization_Subsets}
 
 #post-DECONTAM dataset after normalization does not need technical controls
-WintersD_rare_META <- Winters_META %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
+Theis_WintersD_rare_META <- Theis_Winters_META %>% filter(Run %in% colnames(merged_rare[,9:ncol(merged_rare)]) & Type == "Placenta")
 #splits dataframe into `ASV` count table, `TAX` taxonomy
-WintersD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; WintersD_rare_TAX <- merged_rare[,1:8]
+Theis_WintersD_rare_ASV <- merged_rare[,9:ncol(merged_rare)]; Theis_WintersD_rare_TAX <- merged_rare[,1:8]
 #removes technical controls from `ASV` count table and removes ASVs no longer present in samples
-WintersD_rare_ASV <- WintersD_rare_ASV %>% select_if(colnames(.) %in% WintersD_rare_META$Run); WintersD_rare_ASV <- WintersD_rare_ASV %>% filter(rowSums(.) > 0)
+Theis_WintersD_rare_ASV <- Theis_WintersD_rare_ASV %>% select_if(colnames(.) %in% Theis_WintersD_rare_META$Run); Theis_WintersD_rare_ASV <- Theis_WintersD_rare_ASV %>% filter(rowSums(.) > 0)
 #keeps taxonomy current with count table.
-WintersD_rare_TAX <- WintersD_rare_TAX %>% filter(rownames(.) %in% rownames(WintersD_rare_ASV))
+Theis_WintersD_rare_TAX <- Theis_WintersD_rare_TAX %>% filter(rownames(.) %in% rownames(Theis_WintersD_rare_ASV))
 #stores top five ranked ASVs by mean relative abundance in post-DECONTAM dataset
-Top5_Winters_DECO <- top_ASVs_above_cutoff(ASV = WintersD_rare_ASV, TAX = WintersD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+Top5_Theis_Winters_DECO <- top_ASVs_above_cutoff(ASV = Theis_WintersD_rare_ASV, TAX = Theis_WintersD_rare_TAX, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis_Winters")
 
 #pre-DECONTAM post-normalization subsets
 #selects only term cesarean placental samples and removes ASVs no longer in the dataset
-Winters_ASV_P <- Winters_rare_ASV %>% select_if(Winters_rare_META$Type == "Placenta" & Winters_rare_META$GA == "Term" & Winters_rare_META$Delivery == "Cesarean"); Winters_ASV_P <- Winters_ASV_P %>% filter(rowSums(.) > 0)
+Theis_Winters_ASV_P <- Theis_Winters_rare_ASV %>% select_if(Theis_Winters_rare_META$Type == "Placenta" & Theis_Winters_rare_META$GA == "Term" & Theis_Winters_rare_META$Delivery == "Cesarean"); Theis_Winters_ASV_P <- Theis_Winters_ASV_P %>% filter(rowSums(.) > 0)
 #updates metadata and taxonomy to match ASV count table
-Winters_META_P <- Winters_rare_META %>% filter(Type == "Placenta" & GA == "Term" & Delivery == "Cesarean"); Winters_TAX_P <- Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Winters_ASV_P))
+Theis_Winters_META_P <- Theis_Winters_rare_META %>% filter(Type == "Placenta" & GA == "Term" & Delivery == "Cesarean"); Theis_Winters_TAX_P <- Theis_Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Theis_Winters_ASV_P))
 #stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
-Top5_Winters_P <- top_ASVs_above_cutoff(ASV = Winters_ASV_P, TAX = Winters_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+Top5_Theis_Winters_P <- top_ASVs_above_cutoff(ASV = Theis_Winters_ASV_P, TAX = Theis_Winters_TAX_P, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis_Winters")
 
 
 #filters metadata to placentas from unlabored term cesarean deliveries
-Winters_META_CST_UL <- Winters_META_P %>% filter(Labor == "NIL")
+Theis_Winters_META_CST_UL <- Theis_Winters_META_P %>% filter(Labor == "NIL")
 #selects only placental samples from term cesarean unlabored deliveries and removes ASVs no longer in the dataset
-Winters_ASV_CST_UL <- Winters_ASV_P %>% select_if(colnames(.) %in% Winters_META_CST_UL$Run); Winters_ASV_CST_UL <- Winters_ASV_CST_UL %>% filter(rowSums(.) >0)
+Theis_Winters_ASV_CST_UL <- Theis_Winters_ASV_P %>% select_if(colnames(.) %in% Theis_Winters_META_CST_UL$Run); Theis_Winters_ASV_CST_UL <- Theis_Winters_ASV_CST_UL %>% filter(rowSums(.) >0)
 #updates metadata and taxonomy to match ASV count table
-Winters_TAX_CST_UL <- Winters_TAX_P %>% filter(rownames(.) %in% rownames(Winters_ASV_CST_UL))
+Theis_Winters_TAX_CST_UL <- Theis_Winters_TAX_P %>% filter(rownames(.) %in% rownames(Theis_Winters_ASV_CST_UL))
 #stores top five ranked ASVs by mean relative abundance in pre-DECONTAM dataset
-Top5_Winters_CSTUL <- top_ASVs_above_cutoff(ASV = Winters_ASV_CST_UL, TAX = Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Winters")
+Top5_Theis_Winters_CSTUL <- top_ASVs_above_cutoff(ASV = Theis_Winters_ASV_CST_UL, TAX = Theis_Winters_TAX_CST_UL, cutoff = 0.01, top = 5, ASVs_on_Rows = TRUE, study = "Theis_Winters")
 
 #selects only placental samples from unlabored term cesarean deliveries as well as technical controls and removes ASVs no longer in the dataset
-Winters_ASV_PTC <- Winters_rare_ASV %>% select_if(Winters_rare_META$Type == "Technical Control" | Winters_rare_META$Type == "Placenta" & Winters_rare_META$GA == "Term" & Winters_rare_META$Delivery == "Cesarean" & Winters_rare_META$Labor == "NIL"); Winters_ASV_PTC <- Winters_ASV_PTC %>% filter(rowSums(.) > 0)
+Theis_Winters_ASV_PTC <- Theis_Winters_rare_ASV %>% select_if(Theis_Winters_rare_META$Type == "Technical Control" | Theis_Winters_rare_META$Type == "Placenta" & Theis_Winters_rare_META$GA == "Term" & Theis_Winters_rare_META$Delivery == "Cesarean" & Theis_Winters_rare_META$Labor == "NIL"); Theis_Winters_ASV_PTC <- Theis_Winters_ASV_PTC %>% filter(rowSums(.) > 0)
 #updates metadata and taxonomy to match ASV count table
-Winters_META_PTC <- Winters_rare_META %>% filter(Type == "Technical Control" | Type == "Placenta" & GA == "Term" & Delivery == "Cesarean" & Labor == "NIL"); Winters_TAX_PTC <- Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Winters_ASV_PTC))
+Theis_Winters_META_PTC <- Theis_Winters_rare_META %>% filter(Type == "Technical Control" | Type == "Placenta" & GA == "Term" & Delivery == "Cesarean" & Labor == "NIL"); Theis_Winters_TAX_PTC <- Theis_Winters_rare_TAX %>% filter(rownames(.) %in% rownames(Theis_Winters_ASV_PTC))
 
 ```
 
-### Winters et al. PCoA {#WintersPCoA}
+### Theis, Winters et al. PCoA {#Theis_WintersPCoA}
 
 Code for Figure 3J
 
-```{r Winters_PCoA}
+```{r Theis_Winters_PCoA}
 
 #Figure 3J Placental Samples/Technical Controls
 #allows plotting which extends past plot window
@@ -2428,11 +2426,11 @@ par(xpd= FALSE)
 #sets palette
 palette(c("red", "black"))
 #plots PCoA of placental samples contrasted with technical controls
-Winters_Beta_plot_PTCWA <- beta_div(df = Winters_rare_ASV, df_meta = Winters_rare_META, type = "Type", study = "Winters", inset = 0, all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
+Theis_Winters_Beta_plot_PTCWA <- beta_div(df = Theis_Winters_rare_ASV, df_meta = Theis_Winters_rare_META, type = "Type", study = "Theis, Winters", inset = 0, all_O = TRUE, taxa_on_rows = TRUE, size = 2, legendyn = FALSE)
 #returns top ten ranked ASVs by mean relative abundance in the dataset
-Winters_topASVs <- rowSums(Winters_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
+Theis_Winters_topASVs <- rowSums(Theis_Winters_rare_ASV) %>% sort(., decreasing = TRUE) %>% head(., 10)
 #characterizes ordination space with ASV genus level classifications
-WA_labels(Plot_object = Winters_Beta_plot_PTCWA, ASV_table = Winters_rare_ASV, TAX_table = Winters_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Winters_topASVs))
+WA_labels(Plot_object = Theis_Winters_Beta_plot_PTCWA, ASV_table = Theis_Winters_rare_ASV, TAX_table = Theis_Winters_rare_TAX, ASVs_on_rows = TRUE, ASV_with_Genus = FALSE, Tax_col = "Genus", color = "grey", Greater_than_1per = FALSE, ASVs_to_plot = names(Theis_Winters_topASVs))
 ```
 
 
@@ -2548,34 +2546,109 @@ disp_Theis_vt <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(The
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
 set.seed(1); adonis_Theis_Lvl <- pairwise.adonis2(x = t(Theis_rare_ASV) ~ Level, data = Theis_rare_META)
 
-#returns dispersion statistics of amnion placental samples and technical controls for Winters study
-disp_Winters_a <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Amnion" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Amnion" | Level == "Technical Control") %>% pull(Level)))
+#returns dispersion statistics of amnion placental samples and technical controls for Theis, Winters study
+disp_Theis_Winters_a <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Amnion" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Amnion" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of amnion-chorion placental samples and technical controls for Winters study
-disp_Winters_ac <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Amnion-Chorion_Interface" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Amnion-Chorion_Interface" | Level == "Technical Control") %>% pull(Level)))
+disp_Theis_Winters_ac <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Amnion-Chorion_Interface" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Amnion-Chorion_Interface" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of subchorionic plate placental samples and technical controls for Winters study
-disp_Winters_sub <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Subchorionic_Plate_Swab" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Subchorionic_Plate_Swab" | Level == "Technical Control") %>% pull(Level)))
+disp_Theis_Winters_sub <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Subchorionic_Plate_Swab" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Subchorionic_Plate_Swab" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of villous tree placental samples and technical controls for Winters study
-disp_Winters_vt <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Villous_Tree" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Villous_Tree" | Level == "Technical Control") %>% pull(Level)))
+disp_Theis_Winters_vt <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Villous_Tree" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Villous_Tree" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of basal plate placental samples and technical controls for Winters study
-disp_Winters_bp <- anova(betadisper(d = vegdist(t(Winters_ASV_PTC %>% select_if(Winters_META_PTC$Level == "Basal_Plate" | Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Winters_META_PTC %>% filter(Level == "Basal_Plate" | Level == "Technical Control") %>% pull(Level)))
+disp_Theis_Winters_bp <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Basal_Plate" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Basal_Plate" | Level == "Technical Control") %>% pull(Level)))
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Winters_Lvl <- pairwise.adonis2(x = t(Winters_ASV_PTC) ~ Level, data = Winters_META_PTC)
+set.seed(1); adonis_Theis_Winters_Lvl <- pairwise.adonis2(x = t(Theis_Winters_ASV_PTC) ~ Level, data = Theis_Winters_META_PTC)
 
 #Table S3 Metadata
 Table_S3_Meta <- data.frame(
-  Study = c("de Goffau", rep("Parnell", 3), "Olomu", rep("Sterpu", 3), rep("Theis", 2), rep("Winters", 5)),
+  Study = c("de Goffau", rep("Parnell", 3), "Olomu", rep("Sterpu", 3), rep("Theis", 2), rep("Theis, Winters", 5)),
   Level = c("Villous tissue", "Fetal membrane", "Placental villus", "Basal plate", "Placental parenchyma", "Fetal", "Middle", "Decidua", "Amnion-chorion", "Villous tree", "Amnion", "Amnion-chorion", "Subchorion", "Villous tree", "Basal plate"),
   stringsAsFactors = FALSE)
 
 #collates statistic results
 Table_S3_Results <- data.frame(
-  Disp_F_Stat = c(disp_dg$`F value`[1], disp_Parnell_FM$`F value`[1], disp_Parnell_PV$`F value`[1], disp_Parnell_BP$`F value`[1], disp_Olomu$`F value`[1], disp_Sterpu_fetal$`F value`[1], disp_Sterpu_middle$`F value`[1], disp_Sterpu_decidua$`F value`[1], disp_Theis_ac$`F value`[1], disp_Theis_vt$`F value`[1], disp_Winters_a$`F value`[1], disp_Winters_ac$`F value`[1], disp_Winters_sub$`F value`[1], disp_Winters_vt$`F value`[1], disp_Winters_bp$`F value`[1]),
-  Disp_P_Val = c(disp_dg$`Pr(>F)`[1], disp_Parnell_FM$`Pr(>F)`[1], disp_Parnell_PV$`Pr(>F)`[1], disp_Parnell_BP$`Pr(>F)`[1], disp_Olomu$`Pr(>F)`[1], disp_Sterpu_fetal$`Pr(>F)`[1], disp_Sterpu_middle$`Pr(>F)`[1], disp_Sterpu_decidua$`Pr(>F)`[1], disp_Theis_ac$`Pr(>F)`[1], disp_Theis_vt$`Pr(>F)`[1], disp_Winters_a$`Pr(>F)`[1], disp_Winters_ac$`Pr(>F)`[1], disp_Winters_sub$`Pr(>F)`[1], disp_Winters_vt$`Pr(>F)`[1], disp_Winters_bp$`Pr(>F)`[1]),
-  ADONIS_R2 = c(adonis_dg$aov.tab$R2[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$R2[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$R2[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$R2[1], adonis_Olomu$aov.tab$R2[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$R2[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$R2[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$R2[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$R2[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$R2[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$R2[1]),
-  ADONIS_F_Stat = c(adonis_dg$aov.tab$F.Model[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$F[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$F[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$F[1], adonis_Olomu$aov.tab$F.Model[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$F[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$F[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$F[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$F[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$F[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$F[1]),
-  ADONIS_P_Val = c(adonis_dg$aov.tab$`Pr(>F)`[1], adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$`Pr(>F)`[1], adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$`Pr(>F)`[1], adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$`Pr(>F)`[1], adonis_Olomu$aov.tab$`Pr(>F)`[1], adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$`Pr(>F)`[1], adonis_Sterpu_Lvl$`middle_vs_Technical Control`$`Pr(>F)`[1], adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$`Pr(>F)`[1], adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$`Pr(>F)`[1], adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Amnion_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$`Pr(>F)`[1], adonis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$`Pr(>F)`[1]),
-  stringsAsFactors = FALSE)
+  Disp_F_Stat = c(
+    disp_dg$`F value`[1], 
+    disp_Parnell_FM$`F value`[1], 
+    disp_Parnell_PV$`F value`[1], 
+    disp_Parnell_BP$`F value`[1], 
+    disp_Olomu$`F value`[1], 
+    disp_Sterpu_fetal$`F value`[1], 
+    disp_Sterpu_middle$`F value`[1], 
+    disp_Sterpu_decidua$`F value`[1], 
+    disp_Theis_ac$`F value`[1], 
+    disp_Theis_vt$`F value`[1], 
+    disp_Theis_Winters_a$`F value`[1], 
+    disp_Theis_Winters_ac$`F value`[1], 
+    disp_Theis_Winters_sub$`F value`[1], 
+    disp_Theis_Winters_vt$`F value`[1], 
+    disp_Theis_Winters_bp$`F value`[1]
+    ), Disp_P_Val = c(
+      disp_dg$`Pr(>F)`[1], 
+      disp_Parnell_FM$`Pr(>F)`[1], 
+      disp_Parnell_PV$`Pr(>F)`[1], 
+      disp_Parnell_BP$`Pr(>F)`[1], 
+      disp_Olomu$`Pr(>F)`[1], 
+      disp_Sterpu_fetal$`Pr(>F)`[1], 
+      disp_Sterpu_middle$`Pr(>F)`[1], 
+      disp_Sterpu_decidua$`Pr(>F)`[1], 
+      disp_Theis_ac$`Pr(>F)`[1], 
+      disp_Theis_vt$`Pr(>F)`[1], 
+      disp_Theis_Winters_a$`Pr(>F)`[1], 
+      disp_Theis_Winters_ac$`Pr(>F)`[1], 
+      disp_Theis_Winters_sub$`Pr(>F)`[1], 
+      disp_Theis_Winters_vt$`Pr(>F)`[1], 
+      disp_Theis_Winters_bp$`Pr(>F)`[1]
+      ),  ADONIS_R2 = c(
+        adonis_dg$aov.tab$R2[1], 
+        adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$R2[1], 
+        adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$R2[1], 
+        adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$R2[1], 
+        adonis_Olomu$aov.tab$R2[1], 
+        adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$R2[1], 
+        adonis_Sterpu_Lvl$`middle_vs_Technical Control`$R2[1], 
+        adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$R2[1], 
+        adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$R2[1], 
+        adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$R2[1],
+        adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$R2[1],
+        adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$R2[1],
+        adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$R2[1],
+        adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$R2[1],
+        adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$R2[1]
+        ),  ADONIS_F_Stat = c(
+          adonis_dg$aov.tab$F.Model[1], 
+          adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$F[1], 
+          adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$F[1], 
+          adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$F[1], 
+          adonis_Olomu$aov.tab$F.Model[1], 
+          adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$F[1], 
+          adonis_Sterpu_Lvl$`middle_vs_Technical Control`$F[1], 
+          adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$F[1], 
+          adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$F[1], 
+          adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$F[1],
+          adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$F[1],
+          adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$F[1],
+          adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$F[1],
+          adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$F[1],
+          adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$F[1]
+          ), ADONIS_P_Val = c(
+            adonis_dg$aov.tab$`Pr(>F)`[1], 
+            adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$`Pr(>F)`[1], 
+            adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$`Pr(>F)`[1], 
+            adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Olomu$aov.tab$`Pr(>F)`[1], 
+            adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$`Pr(>F)`[1], 
+            adonis_Sterpu_Lvl$`middle_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$`Pr(>F)`[1], 
+            adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$`Pr(>F)`[1],
+            adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$`Pr(>F)`[1]
+            ), stringsAsFactors = FALSE)
 #dispersion P value statistic for de Goffau is less than 0.001
 Table_S3_Results$Disp_P_Val[1] <- 0
 #trims statistics to 3 significant digits
