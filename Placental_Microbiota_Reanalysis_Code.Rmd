@@ -1,7 +1,7 @@
 ---
 title: "R Markdown: IS THERE A PLACENTAL MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL MICROBIOTA DATASETS"
 author: "Jonathan Panzer"
-date: "May 19th, 2022"
+date: "November 22nd, 2022"
 output:
   html_document:
     toc: true
@@ -121,19 +121,19 @@ knitr::opts_chunk$set(echo = TRUE)
       * [Younge et al. post-normalization subset](#YoungePostNSubset)
       * [Younge et al. PCoA](#YoungePCoA)
 4. [Statistics](#Statistics)
-    * [Table S3 Statistics](#TableS3)
+    * [Table S2 Statistics](#TableS2)
 
 ***
 
 # Preparation {#Preparation}
 
-First download the respository `Placental_Microbiota_Reanalysis` by clicking on `Code`>`Download Zip`. Proceed to unzip it by right-clicking to extract the files. Then place the `Placental_Microbiota_Reanalysis` directory wherever is convenient. After starting RStudio with R (Version 3.6.1) loaded, under `File` select `New Project` -> `Existing Directory` and change to project working directory to the `Placental_Microbiota_Reanalysis` directory. Creating a new project may cause this Rmarkdown file to close if the `.Rmd` version is open in the current session, but just reopen it after the new project is created. When running the code for this critical review and reanalysis, is is preferable to use the `.Rmd` version instead of copy-pasting from the `.html` version. In addition, it is preferable to run the code as chunks by clicking the green arrow button located in the top-right corner of each chunk, or knitting the entire document to HTML once all of the package installations have been taken care of.
+First download the respository `Placental_Microbiota_Reanalysis` by navigating to [the github repository](https://github.com/jp589/Placental_Microbiota_Reanalysis) and clicking on `Code`>`Download Zip`. Proceed to unzip it by right-clicking to extract the files. Then place the `Placental_Microbiota_Reanalysis` directory wherever is convenient. After starting RStudio with R (Version 3.6.1) loaded, under `File` select `New Project` -> `Existing Directory` and change to project working directory to the `Placental_Microbiota_Reanalysis` directory. Creating a new project may cause this Rmarkdown file to close if the `.Rmd` version is open in the current session, but just reopen it after the new project is created. When running the code for this critical review and reanalysis, is is preferable to use the `.Rmd` version instead of copy-pasting from the `.html` version. In addition, it is preferable to run the code as chunks by clicking the green arrow button located in the top-right corner of each chunk, or knitting the entire document to HTML once all of the package installations have been taken care of.
 
 This `.Rmd` document was successfully run with RStudio (Version 1.4.1103) and R (Version 3.6.1). The version of RStudio can be checked under `Help` -> `About RStudio`. The version of R can be checked and changed under `Tools` -> `Global Options`. In the `General` side tab, there should be an R version listed near the top of the window, which can be changed, but this requires RStudio to restart before the version change takes effect. RStudio version 1.4.1717 is stable and can be downloaded [here](https://dailies.rstudio.com/version/1.4.1717-3/). R version 3.6.1 can be downloaded [here](https://cran.r-project.org/bin/windows/base/old/3.6.1/).
 
-In addition to downloading `RStudio` and `R`, `Rtools` is also necessary. It is required for the installation of the R package `devtools`, which is used here to install older versions of packages and packages residing on github. `Rtools` version 35, which is compatible with `R/3.6.1`, can be downloaded [here](https://cran.r-project.org/bin/windows/Rtools/history.html).
+In addition to downloading `RStudio` and `R`, `Rtools` is also necessary. It is required for the installation of the R package `devtools`, which is used here to install older versions of packages and packages residing on github. `Rtools` version 35, which is compatible with `R/3.6.1`, can be downloaded [here](https://cran.r-project.org/bin/windows/Rtools/history.html). Be sure to leave the installation directory as the default `C:/Rtools/`.
 
-`BLAST+` from the NCBI is required to run local BLAST searches to the 16S rRNA gene sequence database located in the `dada2tools` R package. The `BLAST+` installation instructions are  [here](https://www.ncbi.nlm.nih.gov/books/NBK569861/) and the ftp link is [here](ftp://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/). Once the appropriate and compatible version of `BLAST+` is downloaded, it must be installed. To check if `BLAST+` was successfully installed, open a terminal or command prompt and type `blastn`. If a `BLAST query/options error...` is returned, the installation was successful.
+`BLAST+` from the NCBI is required to run local BLAST searches to the 16S rRNA gene sequence database located in the `dada2tools` R package. The `BLAST+` installation instructions are  [here](https://www.ncbi.nlm.nih.gov/books/NBK569861/) and the latest versions for download can be found [here](https://ftp.ncbi.nlm.nih.gov/blast/executables/LATEST/). Once the appropriate and compatible version of `BLAST+` is downloaded, it must be installed. To check if `BLAST+` was successfully installed, open a terminal or command prompt and type `blastn`. If a `BLAST query/options error...` is returned, the installation was successful.
 
 **When asked to update packages, or install from source, press enter to skip updates or select option "no".**
 
@@ -735,8 +735,7 @@ disp_V4P_del <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), grou
 
 #performs pairwise analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
 #all pairwise comparsions significantly different
-set.seed(1); adonis_pw_V4P_del <- pairwise.adonis2(x = t(V4_ASV_P) ~ Delivery, data = V4_META_P)
-
+set.seed(1); adonis_pw_V4P_del <- pairwise.adonis(x = t(V4_ASV_P), factors = V4_META_P$Delivery)
 ```
 
 ## V4 Heatmaps by Study (Figure 6) {#V4Heatmaps}
@@ -859,7 +858,21 @@ dg_meta_merged <- merge(de_Goffau_meta, dg_sra_key, by = "ERS", sort = FALSE)
 #First we filter the merged dataset to only those in the order Enterobacterales. Then we get the exact sequences along with the order classification
 merged_only_Entero <- de_Goffau_merged %>% filter(Order == "Enterobacterales"); dg_seqs <- merged_only_Entero$X; dg_names <- merged_only_Entero$Order
 #queries local NCBI blast database to get finer classification
-Enterobacterales_unclassified_results <- blaster(seqs = dg_seqs, names = dg_names)
+#blaster can be problematic if the terminal does not recognize the escape backslashes for the quotes
+#if this happens we read in the results if the function had worked
+Enterobacterales_unclassified_results <- tryCatch(
+  {
+    blaster(seqs = dg_seqs, names = dg_names)
+  },
+  error = function(cond){
+    message(cond)
+    blasted <- read.table(file = "Blasted.tsv", "\t")
+    colnames(blasted) <- c("Query Seq ID", "Expect value", 
+                           "Bitscore", "Subject TAX ID", "Percent Identical", 
+                           "Query Coverage", "Subject Title")
+    return(blasted)
+  }
+)
 #determines which Enterobacterales were not classifed as Salmonella
 non_salmonella_Enterobacterales <- Enterobacterales_unclassified_results %>% filter(substr(`Subject Title`, 1, 6) != "Salmon")
 #prepares replacement classification at genus level
@@ -2503,11 +2516,11 @@ palette(pal)
 
 # Statistics {#Statistics}
 
-## Table S3 Statistics {#TableS3}
+## Table S2 Statistics {#TableS2}
 
 Dispersion and clustering of placental samples compared to technical controls by level.
 
-```{r Table_S3}
+```{r Table_S2}
 
 #returns dispersion statistics of placental samples and technical controls for de Goffau study
 disp_dg <- anova(betadisper(d = vegdist(t(deGoffau_rare_ASV), method = "bray"), group = deGoffau_rare_META$Type))
@@ -2520,8 +2533,10 @@ disp_Parnell_FM <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if
 disp_Parnell_PV <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if(Parnell_rare_META$Level == "Placental Villus" | Parnell_rare_META$Level == "Technical Control")), method = "bray"), group = Parnell_rare_META %>% filter(Level == "Placental Villus" | Type == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of basal plate placental samples and technical controls for Parnell study
 disp_Parnell_BP <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if(Parnell_rare_META$Level == "Basal Plate" | Parnell_rare_META$Level == "Technical Control")), method = "bray"), group = Parnell_rare_META %>% filter(Level == "Basal Plate" | Type == "Technical Control") %>% pull(Level)))
+#corrects dispersion for multiple comparisons
+p.adjust(c(disp_Parnell_FM$`Pr(>F)`[1], disp_Parnell_PV$`Pr(>F)`[1],disp_Parnell_BP$`Pr(>F)`[1]), method = "bonferroni")
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Parnell_Lvl <- pairwise.adonis2(x = t(Parnell_rare_ASV) ~ Level, data = Parnell_rare_META, nperm = 999)
+set.seed(1); adonis_Parnell_Lvl <- pairwise.adonis(x = t(Parnell_rare_ASV), factors = Parnell_rare_META$Level, perm = 999)
 
 #returns dispersion statistics of placental samples and technical controls for Olomu study
 disp_Olomu <- anova(betadisper(d = vegdist(t(Olomu_ASV_PTC), method = "bray"), group = Olomu_META_PTC$Type))
@@ -2534,17 +2549,21 @@ disp_Sterpu_fetal <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_i
 disp_Sterpu_middle <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "middle" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "middle" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of decidua placental samples and technical controls for Sterpu study
 disp_Sterpu_decidua <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "decidua" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "decidua" | Level == "Technical Control") %>% pull(Level)))
+#corrects dispersion for multiple comparisons
+p.adjust(c(disp_Sterpu_fetal$`Pr(>F)`[1], disp_Sterpu_middle$`Pr(>F)`[1],disp_Sterpu_decidua$`Pr(>F)`[1]), method = "bonferroni")
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Sterpu_Lvl <- pairwise.adonis2(x = t(Sterpu_rare_ASV) ~ Level, data = Sterpu_rare_META, nperm = 999)
+set.seed(1); adonis_Sterpu_Lvl <- pairwise.adonis(x = t(Sterpu_rare_ASV), factors =  Sterpu_rare_META$Level, perm = 999)
 
 #returns dispersion statistics of amnion-chorion placental samples and technical controls for Theis study
 disp_Theis_ac <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(Theis_rare_META$Level == "Amnion-Chorion" | Theis_rare_META$Level == "Technical Control")), method = "bray"), group = Theis_rare_META %>% filter(Level == "Amnion-Chorion" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of villous tree placental samples and technical controls for Theis study
 disp_Theis_vt <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(Theis_rare_META$Level == "Villous Tree" | Theis_rare_META$Level == "Technical Control")), method = "bray"), group = Theis_rare_META %>% filter(Level == "Villous Tree" | Level == "Technical Control") %>% pull(Level)))
+#corrects dispersion for multiple comparisons
+p.adjust(c(disp_Theis_ac$`Pr(>F)`[1], disp_Theis_vt$`Pr(>F)`[1]), method = "bonferroni")
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Lvl <- pairwise.adonis2(x = t(Theis_rare_ASV) ~ Level, data = Theis_rare_META)
+set.seed(1); adonis_Theis_Lvl <- pairwise.adonis(x = t(Theis_rare_ASV), factors =  Theis_rare_META$Level, perm = 999)
 
 #returns dispersion statistics of amnion placental samples and technical controls for Theis, Winters study
 disp_Theis_Winters_a <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Amnion" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Amnion" | Level == "Technical Control") %>% pull(Level)))
@@ -2556,111 +2575,9 @@ disp_Theis_Winters_sub <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %
 disp_Theis_Winters_vt <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Villous_Tree" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Villous_Tree" | Level == "Technical Control") %>% pull(Level)))
 #returns dispersion statistics of basal plate placental samples and technical controls for Winters study
 disp_Theis_Winters_bp <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Basal_Plate" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Basal_Plate" | Level == "Technical Control") %>% pull(Level)))
+p.adjust(c(disp_Theis_Winters_a$`Pr(>F)`[1], disp_Theis_Winters_ac$`Pr(>F)`[1], disp_Theis_Winters_sub$`Pr(>F)`[1], disp_Theis_Winters_vt$`Pr(>F)`[1], disp_Theis_Winters_bp$`Pr(>F)`[1]), method = "bonferroni")
+
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Winters_Lvl <- pairwise.adonis2(x = t(Theis_Winters_ASV_PTC) ~ Level, data = Theis_Winters_META_PTC)
-
-#Table S3 Metadata
-Table_S3_Meta <- data.frame(
-  Study = c("de Goffau", rep("Parnell", 3), "Olomu", rep("Sterpu", 3), rep("Theis", 2), rep("Theis, Winters", 5)),
-  Level = c("Villous tissue", "Fetal membrane", "Placental villus", "Basal plate", "Placental parenchyma", "Fetal", "Middle", "Decidua", "Amnion-chorion", "Villous tree", "Amnion", "Amnion-chorion", "Subchorion", "Villous tree", "Basal plate"),
-  stringsAsFactors = FALSE)
-
-#collates statistic results
-Table_S3_Results <- data.frame(
-  Disp_F_Stat = c(
-    disp_dg$`F value`[1], 
-    disp_Parnell_FM$`F value`[1], 
-    disp_Parnell_PV$`F value`[1], 
-    disp_Parnell_BP$`F value`[1], 
-    disp_Olomu$`F value`[1], 
-    disp_Sterpu_fetal$`F value`[1], 
-    disp_Sterpu_middle$`F value`[1], 
-    disp_Sterpu_decidua$`F value`[1], 
-    disp_Theis_ac$`F value`[1], 
-    disp_Theis_vt$`F value`[1], 
-    disp_Theis_Winters_a$`F value`[1], 
-    disp_Theis_Winters_ac$`F value`[1], 
-    disp_Theis_Winters_sub$`F value`[1], 
-    disp_Theis_Winters_vt$`F value`[1], 
-    disp_Theis_Winters_bp$`F value`[1]
-    ), Disp_P_Val = c(
-      disp_dg$`Pr(>F)`[1], 
-      disp_Parnell_FM$`Pr(>F)`[1], 
-      disp_Parnell_PV$`Pr(>F)`[1], 
-      disp_Parnell_BP$`Pr(>F)`[1], 
-      disp_Olomu$`Pr(>F)`[1], 
-      disp_Sterpu_fetal$`Pr(>F)`[1], 
-      disp_Sterpu_middle$`Pr(>F)`[1], 
-      disp_Sterpu_decidua$`Pr(>F)`[1], 
-      disp_Theis_ac$`Pr(>F)`[1], 
-      disp_Theis_vt$`Pr(>F)`[1], 
-      disp_Theis_Winters_a$`Pr(>F)`[1], 
-      disp_Theis_Winters_ac$`Pr(>F)`[1], 
-      disp_Theis_Winters_sub$`Pr(>F)`[1], 
-      disp_Theis_Winters_vt$`Pr(>F)`[1], 
-      disp_Theis_Winters_bp$`Pr(>F)`[1]
-      ),  ADONIS_R2 = c(
-        adonis_dg$aov.tab$R2[1], 
-        adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$R2[1], 
-        adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$R2[1], 
-        adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$R2[1], 
-        adonis_Olomu$aov.tab$R2[1], 
-        adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$R2[1], 
-        adonis_Sterpu_Lvl$`middle_vs_Technical Control`$R2[1], 
-        adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$R2[1], 
-        adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$R2[1], 
-        adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$R2[1],
-        adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$R2[1],
-        adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$R2[1],
-        adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$R2[1],
-        adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$R2[1],
-        adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$R2[1]
-        ),  ADONIS_F_Stat = c(
-          adonis_dg$aov.tab$F.Model[1], 
-          adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$F[1], 
-          adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$F[1], 
-          adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$F[1], 
-          adonis_Olomu$aov.tab$F.Model[1], 
-          adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$F[1], 
-          adonis_Sterpu_Lvl$`middle_vs_Technical Control`$F[1], 
-          adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$F[1], 
-          adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$F[1], 
-          adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$F[1],
-          adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$F[1],
-          adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$F[1],
-          adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$F[1],
-          adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$F[1],
-          adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$F[1]
-          ), ADONIS_P_Val = c(
-            adonis_dg$aov.tab$`Pr(>F)`[1], 
-            adonis_Parnell_Lvl$`Fetal Membrane_vs_Technical Control`$`Pr(>F)`[1], 
-            adonis_Parnell_Lvl$`Placental Villus_vs_Technical Control`$`Pr(>F)`[1], 
-            adonis_Parnell_Lvl$`Basal Plate_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Olomu$aov.tab$`Pr(>F)`[1], 
-            adonis_Sterpu_Lvl$`fetal_vs_Technical Control`$`Pr(>F)`[1], 
-            adonis_Sterpu_Lvl$`middle_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Sterpu_Lvl$`decidua_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Lvl$`Amnion-Chorion_vs_Technical Control`$`Pr(>F)`[1], 
-            adonis_Theis_Lvl$`Villous Tree_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Winters_Lvl$`Amnion_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Winters_Lvl$`Amnion-Chorion_Interface_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Winters_Lvl$`Subchorionic_Plate_Swab_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Winters_Lvl$`Villous_Tree_vs_Technical Control`$`Pr(>F)`[1],
-            adonis_Theis_Winters_Lvl$`Basal_Plate_vs_Technical Control`$`Pr(>F)`[1]
-            ), stringsAsFactors = FALSE)
-#dispersion P value statistic for de Goffau is less than 0.001
-Table_S3_Results$Disp_P_Val[1] <- 0
-#trims statistics to 3 significant digits
-Table_S3_Results <- signif(Table_S3_Results, digits = 3)
-
-#combines metadata with results
-Table_S3 <- cbind(Table_S3_Meta, Table_S3_Results)
-
-#generates dataframe for renaming header with key column: `col_keys`
-new_header <- data.frame(
-  col_keys = colnames(Table_S3),
-  header_above = c("Study", "Level", rep("Dispersion", 2), rep("NPMANOVA", 3)),
-  header_below = c("Study", "Level", "F Statistic", "P value", "R2", "F Statistic", "P Value"),
-  stringsAsFactors = FALSE)
+set.seed(1); adonis_Theis_Winters_Lvl <- pairwise.adonis(x = t(Theis_Winters_ASV_PTC), factors =  Theis_Winters_META_PTC$Level, perm = 999)
 ```
