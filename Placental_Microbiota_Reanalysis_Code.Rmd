@@ -1,7 +1,7 @@
 ---
 title: "R Markdown: IS THERE A PLACENTAL MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL MICROBIOTA DATASETS"
 author: "Jonathan Panzer"
-date: "November 22nd, 2022"
+date: "November 23rd, 2022"
 output:
   html_document:
     toc: true
@@ -315,7 +315,7 @@ High_Quality_Samples <- list(
 
 # 16S rRNA hypervariable region V4 subset analysis {#V4Subset}
 
-This begins the portion of code used to generate figures 5 and 6. For each of the six studies, the DADA2 analyzed sequence data, which is stored in a `Study_Name_merged.csv` file, was cleaned (e.g., mitochondrial, chloroplast, and reads unclassified at the phylum level or above were removed from the dataset. In addition, samples with less than 100 reads after the prior read removal were removed. For the exact cleaning process, the code for the function `dadaset_clean()` can be viewed by typing the function `dadaset_clean` without parentheses and pressing enter. In addition, publicly available metadata for each study, usually a `Study_Name_SraRunTable.csv`, was stored. ASVs not classified at the genus level in tables and figures were compared to bacterial type strains in the NCBI BLAST sequence database. Sequences were reclassified to the genus level with the highest percent identity greater than 95%.
+This begins the portion of code used to generate figures 5 and 6. For each of the six studies, the DADA2 analyzed sequence data, which is stored in a `Study_Name_merged.csv` file, was cleaned (e.g., mitochondrial, chloroplast, and reads unclassified at the phylum level or above were removed from the dataset). In addition, samples with less than 100 reads after the prior read removal were removed. For the exact cleaning process, the code for the function `dadaset_clean()` can be viewed by typing the function `dada2tools::dadaset_clean` without parentheses and pressing enter. In addition, publicly available metadata was stored for each study, usually titled `Study_Name_SraRunTable.csv`. ASVs not classified at the genus level in tables and figures were compared to bacterial type strains in the NCBI BLAST sequence database. Sequences were reclassified to the genus level with the highest percent identity greater than 95%.
 
 ### Dinsdale et al. setup {#DinsdaleSetup}
 
@@ -712,7 +712,7 @@ disp_V4_P_study <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), g
 #performs analysis of variance between sample types using ADONIS (NPMANOVA). Samples are blocked by study.
 #variance found to be significantly different across studies
 perm <- how(nperm = 999)
-set.seed(1); adonis_V4_P_study <- adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, method = "bray", permutations = perm)
+set.seed(1); adonis_V4_P_study <- adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, method = "bray", permutations = perm);adonis_V4_P_study
 
 #evaluates dispersion between technical controls grouped by study
 #dispersion found to be significantly different
@@ -733,9 +733,9 @@ WA_labels(Plot_object = S6_Beta_Plot_P, ASV_table = V4_ASV_P, TAX_table = V4_TAX
 #dispersion found to be significantly different
 disp_V4P_del <- anova(betadisper(d = vegdist(t(V4_ASV_P), method = "bray"), group = V4_META_P$Delivery))
 
-#performs pairwise analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
-#all pairwise comparsions significantly different
-set.seed(1); adonis_pw_V4P_del <- pairwise.adonis(x = t(V4_ASV_P), factors = V4_META_P$Delivery)
+#performs analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
+#significant differences between placental samples based on mode of delivery.
+set.seed(1); adonis_pw_V4P_del_VC <- adonis2(formula = t(V4_ASV_P %>% select_if(V4_META_P$Delivery == "Cesarean" |V4_META_P$Delivery == "Vaginal")) ~ Delivery, data = V4_META_P %>% filter(Delivery == "Cesarean" | Delivery == "Vaginal"), permutations = 999, method = "bray");adonis_pw_V4P_del_VC
 ```
 
 ## V4 Heatmaps by Study (Figure 6) {#V4Heatmaps}
@@ -2536,12 +2536,12 @@ disp_Parnell_BP <- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %>% select_if
 #corrects dispersion for multiple comparisons
 p.adjust(c(disp_Parnell_FM$`Pr(>F)`[1], disp_Parnell_PV$`Pr(>F)`[1],disp_Parnell_BP$`Pr(>F)`[1]), method = "bonferroni")
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Parnell_Lvl <- pairwise.adonis(x = t(Parnell_rare_ASV), factors = Parnell_rare_META$Level, perm = 999)
+set.seed(1); adonis_Parnell_Lvl <- pairwise.adonis(x = t(Parnell_rare_ASV), factors = Parnell_rare_META$Level, perm = 999);adonis_Parnell_Lvl
 
 #returns dispersion statistics of placental samples and technical controls for Olomu study
 disp_Olomu <- anova(betadisper(d = vegdist(t(Olomu_ASV_PTC), method = "bray"), group = Olomu_META_PTC$Type))
 #returns NPMANOVA statistics of placental samples compared to technical controls for Olomu study
-set.seed(1); adonis_Olomu <- adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC, method = "bray")
+set.seed(1); adonis_Olomu <- adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC, method = "bray");adonis_Olomu
 
 #returns dispersion statistics of fetal membrane placental samples and technical controls for Sterpu study
 disp_Sterpu_fetal <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select_if(Sterpu_rare_META$Level == "fetal" | Sterpu_rare_META$Level == "Technical Control")), method = "bray"), group = Sterpu_rare_META %>% filter(Level == "fetal" | Level == "Technical Control") %>% pull(Level)))
@@ -2553,7 +2553,7 @@ disp_Sterpu_decidua <- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %>% select
 p.adjust(c(disp_Sterpu_fetal$`Pr(>F)`[1], disp_Sterpu_middle$`Pr(>F)`[1],disp_Sterpu_decidua$`Pr(>F)`[1]), method = "bonferroni")
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Sterpu_Lvl <- pairwise.adonis(x = t(Sterpu_rare_ASV), factors =  Sterpu_rare_META$Level, perm = 999)
+set.seed(1); adonis_Sterpu_Lvl <- pairwise.adonis(x = t(Sterpu_rare_ASV), factors =  Sterpu_rare_META$Level, perm = 999);adonis_Sterpu_Lvl
 
 #returns dispersion statistics of amnion-chorion placental samples and technical controls for Theis study
 disp_Theis_ac <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(Theis_rare_META$Level == "Amnion-Chorion" | Theis_rare_META$Level == "Technical Control")), method = "bray"), group = Theis_rare_META %>% filter(Level == "Amnion-Chorion" | Level == "Technical Control") %>% pull(Level)))
@@ -2563,7 +2563,7 @@ disp_Theis_vt <- anova(betadisper(d = vegdist(t(Theis_rare_ASV %>% select_if(The
 p.adjust(c(disp_Theis_ac$`Pr(>F)`[1], disp_Theis_vt$`Pr(>F)`[1]), method = "bonferroni")
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Lvl <- pairwise.adonis(x = t(Theis_rare_ASV), factors =  Theis_rare_META$Level, perm = 999)
+set.seed(1); adonis_Theis_Lvl <- pairwise.adonis(x = t(Theis_rare_ASV), factors =  Theis_rare_META$Level, perm = 999);adonis_Theis_Lvl
 
 #returns dispersion statistics of amnion placental samples and technical controls for Theis, Winters study
 disp_Theis_Winters_a <- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %>% select_if(Theis_Winters_META_PTC$Level == "Amnion" | Theis_Winters_META_PTC$Level == "Technical Control")), method = "bray"), group = Theis_Winters_META_PTC %>% filter(Level == "Amnion" | Level == "Technical Control") %>% pull(Level)))
@@ -2579,5 +2579,5 @@ p.adjust(c(disp_Theis_Winters_a$`Pr(>F)`[1], disp_Theis_Winters_ac$`Pr(>F)`[1], 
 
 
 #returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Winters_Lvl <- pairwise.adonis(x = t(Theis_Winters_ASV_PTC), factors =  Theis_Winters_META_PTC$Level, perm = 999)
+set.seed(1); adonis_Theis_Winters_Lvl <- pairwise.adonis(x = t(Theis_Winters_ASV_PTC), factors =  Theis_Winters_META_PTC$Level, perm = 999);adonis_Theis_Winters_Lvl
 ```

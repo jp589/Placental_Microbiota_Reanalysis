@@ -1506,7 +1506,7 @@ div.tocify {
 MICROBIOTA? A CRITICAL REVIEW AND REANALYSIS OF PUBLISHED PLACENTAL
 MICROBIOTA DATASETS</h1>
 <h4 class="author">Jonathan Panzer</h4>
-<h4 class="date">November 22nd, 2022</h4>
+<h4 class="date">November 23rd, 2022</h4>
 
 </div>
 
@@ -2113,16 +2113,17 @@ High_Quality_Samples &lt;- list(
 each of the six studies, the DADA2 analyzed sequence data, which is
 stored in a <code>Study_Name_merged.csv</code> file, was cleaned (e.g.,
 mitochondrial, chloroplast, and reads unclassified at the phylum level
-or above were removed from the dataset. In addition, samples with less
+or above were removed from the dataset). In addition, samples with less
 than 100 reads after the prior read removal were removed. For the exact
 cleaning process, the code for the function <code>dadaset_clean()</code>
-can be viewed by typing the function <code>dadaset_clean</code> without
-parentheses and pressing enter. In addition, publicly available metadata
-for each study, usually a <code>Study_Name_SraRunTable.csv</code>, was
-stored. ASVs not classified at the genus level in tables and figures
-were compared to bacterial type strains in the NCBI BLAST sequence
-database. Sequences were reclassified to the genus level with the
-highest percent identity greater than 95%.</p>
+can be viewed by typing the function
+<code>dada2tools::dadaset_clean</code> without parentheses and pressing
+enter. In addition, publicly available metadata was stored for each
+study, usually titled <code>Study_Name_SraRunTable.csv</code>. ASVs not
+classified at the genus level in tables and figures were compared to
+bacterial type strains in the NCBI BLAST sequence database. Sequences
+were reclassified to the genus level with the highest percent identity
+greater than 95%.</p>
 <div id="DinsdaleSetup" class="section level3">
 <h3>Dinsdale et al. setup</h3>
 <p>This chunk processes the Dinsdale et al. dataset after DADA2
@@ -2521,9 +2522,20 @@ disp_V4_P_study &lt;- anova(betadisper(d = vegdist(t(V4_ASV_P), method = &quot;b
 #performs analysis of variance between sample types using ADONIS (NPMANOVA). Samples are blocked by study.
 #variance found to be significantly different across studies
 perm &lt;- how(nperm = 999)
-set.seed(1); adonis_V4_P_study &lt;- adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, method = &quot;bray&quot;, permutations = perm)
-
-#evaluates dispersion between technical controls grouped by study
+set.seed(1); adonis_V4_P_study &lt;- adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, method = &quot;bray&quot;, permutations = perm);adonis_V4_P_study</code></pre>
+<pre><code>## Permutation test for adonis under reduced model
+## Terms added sequentially (first to last)
+## Permutation: free
+## Number of permutations: 999
+## 
+## adonis2(formula = t(V4_ASV_P) ~ Study, data = V4_META_P, permutations = perm, method = &quot;bray&quot;)
+##           Df SumOfSqs      R2      F Pr(&gt;F)    
+## Study      5   32.983 0.10474 16.005  0.001 ***
+## Residual 684  281.917 0.89526                  
+## Total    689  314.899 1.00000                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<pre class="r"><code>#evaluates dispersion between technical controls grouped by study
 #dispersion found to be significantly different
 disp_V4_T_study &lt;- anova(betadisper(d = vegdist(t(V4_ASV_T), method = &quot;bray&quot;), group = V4_META_T$Study))
 
@@ -2542,9 +2554,21 @@ WA_labels(Plot_object = S6_Beta_Plot_P, ASV_table = V4_ASV_P, TAX_table = V4_TAX
 #dispersion found to be significantly different
 disp_V4P_del &lt;- anova(betadisper(d = vegdist(t(V4_ASV_P), method = &quot;bray&quot;), group = V4_META_P$Delivery))
 
-#performs pairwise analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
-#all pairwise comparsions significantly different
-set.seed(1); adonis_pw_V4P_del &lt;- pairwise.adonis(x = t(V4_ASV_P), factors = V4_META_P$Delivery)</code></pre>
+#performs analysis of variance between sample types (delivery) using ADONIS (NPMANOVA).
+#significant differences between placental samples based on mode of delivery.
+set.seed(1); adonis_pw_V4P_del_VC &lt;- adonis2(formula = t(V4_ASV_P %&gt;% select_if(V4_META_P$Delivery == &quot;Cesarean&quot; |V4_META_P$Delivery == &quot;Vaginal&quot;)) ~ Delivery, data = V4_META_P %&gt;% filter(Delivery == &quot;Cesarean&quot; | Delivery == &quot;Vaginal&quot;), permutations = 999, method = &quot;bray&quot;);adonis_pw_V4P_del_VC</code></pre>
+<pre><code>## Permutation test for adonis under reduced model
+## Terms added sequentially (first to last)
+## Permutation: free
+## Number of permutations: 999
+## 
+## adonis2(formula = t(V4_ASV_P %&gt;% select_if(V4_META_P$Delivery == &quot;Cesarean&quot; | V4_META_P$Delivery == &quot;Vaginal&quot;)) ~ Delivery, data = V4_META_P %&gt;% filter(Delivery == &quot;Cesarean&quot; | Delivery == &quot;Vaginal&quot;), permutations = 999, method = &quot;bray&quot;)
+##           Df SumOfSqs      R2      F Pr(&gt;F)    
+## Delivery   1    10.28 0.04272 23.877  0.001 ***
+## Residual 535   230.34 0.95728                  
+## Total    536   240.62 1.00000                  
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
 </div>
 <div id="V4Heatmaps" class="section level2">
 <h2>V4 Heatmaps by Study (Figure 6)</h2>
@@ -5085,14 +5109,39 @@ disp_Parnell_BP &lt;- anova(betadisper(d = vegdist(t(Parnell_rare_ASV %&gt;% sel
 p.adjust(c(disp_Parnell_FM$`Pr(&gt;F)`[1], disp_Parnell_PV$`Pr(&gt;F)`[1],disp_Parnell_BP$`Pr(&gt;F)`[1]), method = &quot;bonferroni&quot;)</code></pre>
 <pre><code>## [1] 1 1 1</code></pre>
 <pre class="r"><code>#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Parnell_Lvl &lt;- pairwise.adonis(x = t(Parnell_rare_ASV), factors = Parnell_rare_META$Level, perm = 999)
-
-#returns dispersion statistics of placental samples and technical controls for Olomu study
+set.seed(1); adonis_Parnell_Lvl &lt;- pairwise.adonis(x = t(Parnell_rare_ASV), factors = Parnell_rare_META$Level, perm = 999);adonis_Parnell_Lvl</code></pre>
+<pre><code>##                                   pairs Df SumsOfSqs   F.Model         R2
+## 1         Basal Plate vs Fetal Membrane  1 1.1146623 2.5148316 0.02296339
+## 2       Basal Plate vs Placental Villus  1 0.6263972 1.4083523 0.01299118
+## 3      Basal Plate vs Technical Control  1 0.5504032 1.2137732 0.01861222
+## 4    Fetal Membrane vs Placental Villus  1 0.4906129 1.1173070 0.01043069
+## 5   Fetal Membrane vs Technical Control  1 0.4526325 1.0192989 0.01592174
+## 6 Placental Villus vs Technical Control  1 0.4253374 0.9522318 0.01488974
+##   p.value p.adjusted sig
+## 1   0.003      0.018   .
+## 2   0.094      0.564    
+## 3   0.169      1.000    
+## 4   0.240      1.000    
+## 5   0.339      1.000    
+## 6   0.432      1.000</code></pre>
+<pre class="r"><code>#returns dispersion statistics of placental samples and technical controls for Olomu study
 disp_Olomu &lt;- anova(betadisper(d = vegdist(t(Olomu_ASV_PTC), method = &quot;bray&quot;), group = Olomu_META_PTC$Type))
 #returns NPMANOVA statistics of placental samples compared to technical controls for Olomu study
-set.seed(1); adonis_Olomu &lt;- adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC, method = &quot;bray&quot;)
-
-#returns dispersion statistics of fetal membrane placental samples and technical controls for Sterpu study
+set.seed(1); adonis_Olomu &lt;- adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC, method = &quot;bray&quot;);adonis_Olomu</code></pre>
+<pre><code>## 
+## Call:
+## adonis(formula = t(Olomu_ASV_PTC) ~ Type, data = Olomu_META_PTC,      method = &quot;bray&quot;) 
+## 
+## Permutation: free
+## Number of permutations: 999
+## 
+## Terms added sequentially (first to last)
+## 
+##           Df SumsOfSqs MeanSqs F.Model      R2 Pr(&gt;F)
+## Type       1    0.2568 0.25676 0.73137 0.01599   0.75
+## Residuals 45   15.7980 0.35107         0.98401       
+## Total     46   16.0548                 1.00000</code></pre>
+<pre class="r"><code>#returns dispersion statistics of fetal membrane placental samples and technical controls for Sterpu study
 disp_Sterpu_fetal &lt;- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %&gt;% select_if(Sterpu_rare_META$Level == &quot;fetal&quot; | Sterpu_rare_META$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Sterpu_rare_META %&gt;% filter(Level == &quot;fetal&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
 #returns dispersion statistics of middle placental samples and technical controls for Sterpu study
 disp_Sterpu_middle &lt;- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %&gt;% select_if(Sterpu_rare_META$Level == &quot;middle&quot; | Sterpu_rare_META$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Sterpu_rare_META %&gt;% filter(Level == &quot;middle&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
@@ -5102,9 +5151,22 @@ disp_Sterpu_decidua &lt;- anova(betadisper(d = vegdist(t(Sterpu_rare_ASV %&gt;% 
 p.adjust(c(disp_Sterpu_fetal$`Pr(&gt;F)`[1], disp_Sterpu_middle$`Pr(&gt;F)`[1],disp_Sterpu_decidua$`Pr(&gt;F)`[1]), method = &quot;bonferroni&quot;)</code></pre>
 <pre><code>## [1] 0.003164815 0.108299174 0.010492068</code></pre>
 <pre class="r"><code>#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Sterpu_Lvl &lt;- pairwise.adonis(x = t(Sterpu_rare_ASV), factors =  Sterpu_rare_META$Level, perm = 999)
-
-#returns dispersion statistics of amnion-chorion placental samples and technical controls for Theis study
+set.seed(1); adonis_Sterpu_Lvl &lt;- pairwise.adonis(x = t(Sterpu_rare_ASV), factors =  Sterpu_rare_META$Level, perm = 999);adonis_Sterpu_Lvl</code></pre>
+<pre><code>##                          pairs Df SumsOfSqs   F.Model          R2 p.value
+## 1            middle vs decidua  1 0.3140319 0.7126417 0.008124732   0.799
+## 2              middle vs fetal  1 0.3896014 0.8887665 0.009778618   0.540
+## 3  middle vs Technical Control  1 1.7223891 4.1195300 0.076119101   0.001
+## 4             decidua vs fetal  1 0.3059641 0.6887178 0.007854121   0.832
+## 5 decidua vs Technical Control  1 1.6277514 3.8057109 0.074907148   0.001
+## 6   fetal vs Technical Control  1 1.6860120 3.9731153 0.073612859   0.001
+##   p.adjusted sig
+## 1      1.000    
+## 2      1.000    
+## 3      0.006   *
+## 4      1.000    
+## 5      0.006   *
+## 6      0.006   *</code></pre>
+<pre class="r"><code>#returns dispersion statistics of amnion-chorion placental samples and technical controls for Theis study
 disp_Theis_ac &lt;- anova(betadisper(d = vegdist(t(Theis_rare_ASV %&gt;% select_if(Theis_rare_META$Level == &quot;Amnion-Chorion&quot; | Theis_rare_META$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Theis_rare_META %&gt;% filter(Level == &quot;Amnion-Chorion&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
 #returns dispersion statistics of villous tree placental samples and technical controls for Theis study
 disp_Theis_vt &lt;- anova(betadisper(d = vegdist(t(Theis_rare_ASV %&gt;% select_if(Theis_rare_META$Level == &quot;Villous Tree&quot; | Theis_rare_META$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Theis_rare_META %&gt;% filter(Level == &quot;Villous Tree&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
@@ -5112,9 +5174,16 @@ disp_Theis_vt &lt;- anova(betadisper(d = vegdist(t(Theis_rare_ASV %&gt;% select_
 p.adjust(c(disp_Theis_ac$`Pr(&gt;F)`[1], disp_Theis_vt$`Pr(&gt;F)`[1]), method = &quot;bonferroni&quot;)</code></pre>
 <pre><code>## [1] 0.3163239 0.3191202</code></pre>
 <pre class="r"><code>#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Lvl &lt;- pairwise.adonis(x = t(Theis_rare_ASV), factors =  Theis_rare_META$Level, perm = 999)
-
-#returns dispersion statistics of amnion placental samples and technical controls for Theis, Winters study
+set.seed(1); adonis_Theis_Lvl &lt;- pairwise.adonis(x = t(Theis_rare_ASV), factors =  Theis_rare_META$Level, perm = 999);adonis_Theis_Lvl</code></pre>
+<pre><code>##                                 pairs Df SumsOfSqs   F.Model         R2 p.value
+## 1      Amnion-Chorion vs Villous Tree  1 0.2335158 0.6794988 0.01220375   0.778
+## 2 Amnion-Chorion vs Technical Control  1 0.5288895 1.4197921 0.02045227   0.141
+## 3   Villous Tree vs Technical Control  1 0.7544714 2.0253342 0.02851566   0.033
+##   p.adjusted sig
+## 1      1.000    
+## 2      0.423    
+## 3      0.099</code></pre>
+<pre class="r"><code>#returns dispersion statistics of amnion placental samples and technical controls for Theis, Winters study
 disp_Theis_Winters_a &lt;- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %&gt;% select_if(Theis_Winters_META_PTC$Level == &quot;Amnion&quot; | Theis_Winters_META_PTC$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Theis_Winters_META_PTC %&gt;% filter(Level == &quot;Amnion&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
 #returns dispersion statistics of amnion-chorion placental samples and technical controls for Winters study
 disp_Theis_Winters_ac &lt;- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC %&gt;% select_if(Theis_Winters_META_PTC$Level == &quot;Amnion-Chorion_Interface&quot; | Theis_Winters_META_PTC$Level == &quot;Technical Control&quot;)), method = &quot;bray&quot;), group = Theis_Winters_META_PTC %&gt;% filter(Level == &quot;Amnion-Chorion_Interface&quot; | Level == &quot;Technical Control&quot;) %&gt;% pull(Level)))
@@ -5127,7 +5196,39 @@ disp_Theis_Winters_bp &lt;- anova(betadisper(d = vegdist(t(Theis_Winters_ASV_PTC
 p.adjust(c(disp_Theis_Winters_a$`Pr(&gt;F)`[1], disp_Theis_Winters_ac$`Pr(&gt;F)`[1], disp_Theis_Winters_sub$`Pr(&gt;F)`[1], disp_Theis_Winters_vt$`Pr(&gt;F)`[1], disp_Theis_Winters_bp$`Pr(&gt;F)`[1]), method = &quot;bonferroni&quot;)</code></pre>
 <pre><code>## [1] 0.3083048 1.0000000 1.0000000 1.0000000 1.0000000</code></pre>
 <pre class="r"><code>#returns NPMANOVA statistics of placental samples by level compared to technical controls for Parnell study
-set.seed(1); adonis_Theis_Winters_Lvl &lt;- pairwise.adonis(x = t(Theis_Winters_ASV_PTC), factors =  Theis_Winters_META_PTC$Level, perm = 999)</code></pre>
+set.seed(1); adonis_Theis_Winters_Lvl &lt;- pairwise.adonis(x = t(Theis_Winters_ASV_PTC), factors =  Theis_Winters_META_PTC$Level, perm = 999);adonis_Theis_Winters_Lvl</code></pre>
+<pre><code>##                                                  pairs Df SumsOfSqs   F.Model
+## 1                   Amnion-Chorion_Interface vs Amnion  1 1.3125264 3.6396863
+## 2              Amnion-Chorion_Interface vs Basal_Plate  1 0.4549975 1.1354810
+## 3  Amnion-Chorion_Interface vs Subchorionic_Plate_Swab  1 0.9872436 2.5404873
+## 4             Amnion-Chorion_Interface vs Villous_Tree  1 0.9211048 2.3009124
+## 5        Amnion-Chorion_Interface vs Technical Control  1 0.5035099 1.2331304
+## 6                                Amnion vs Basal_Plate  1 1.0735738 2.9146911
+## 7                    Amnion vs Subchorionic_Plate_Swab  1 2.0435268 5.8658101
+## 8                               Amnion vs Villous_Tree  1 1.3103828 3.7447710
+## 9                          Amnion vs Technical Control  1 1.6035596 4.4321480
+## 10              Basal_Plate vs Subchorionic_Plate_Swab  1 1.1232229 2.8346775
+## 11                         Basal_Plate vs Villous_Tree  1 0.8831281 2.1705698
+## 12                    Basal_Plate vs Technical Control  1 0.5838232 1.4156048
+## 13             Subchorionic_Plate_Swab vs Villous_Tree  1 0.2755270 0.7079413
+## 14        Subchorionic_Plate_Swab vs Technical Control  1 0.4973047 1.2313751
+## 15                   Villous_Tree vs Technical Control  1 0.4853822 1.1324204
+##            R2 p.value p.adjusted sig
+## 1  0.06002152   0.001      0.015   .
+## 2  0.02264825   0.238      1.000    
+## 3  0.07355100   0.003      0.045   .
+## 4  0.08130170   0.002      0.030   .
+## 5  0.03710545   0.128      1.000    
+## 6  0.04355831   0.001      0.015   .
+## 7  0.11095659   0.001      0.015   .
+## 8  0.08369181   0.001      0.015   .
+## 9  0.08617466   0.001      0.015   .
+## 10 0.06775904   0.001      0.015   .
+## 11 0.06171552   0.003      0.045   .
+## 12 0.03502619   0.041      0.615    
+## 13 0.04237155   0.795      1.000    
+## 14 0.05300483   0.193      1.000    
+## 15 0.06609810   0.258      1.000</code></pre>
 </div>
 </div>
 
